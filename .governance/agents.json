@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "enforcement_mode": "disabled",
+  "capability_taxonomy": [
+    "code",
+    "test",
+    "docs",
+    "review",
+    "research",
+    "deploy"
+  ],
+  "agents": [
+    {
+      "id": "codex",
+      "type": "llm-codex",
+      "capabilities": [
+        "code",
+        "test",
+        "docs",
+        "review",
+        "research"
+      ],
+      "constraints": {
+        "max_concurrent_packets": 1
+      },
+      "metadata": {}
+    },
+    {
+      "id": "claude",
+      "type": "llm-claude",
+      "capabilities": [
+        "code",
+        "test",
+        "docs",
+        "review",
+        "research"
+      ],
+      "constraints": {
+        "max_concurrent_packets": 1
+      },
+      "metadata": {}
+    },
+    {
+      "id": "gemini",
+      "type": "llm-gemini",
+      "capabilities": [
+        "docs",
+        "research",
+        "review"
+      ],
+      "constraints": {
+        "max_concurrent_packets": 1
+      },
+      "metadata": {}
+    }
+  ]
+}

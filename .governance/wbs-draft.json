@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "project_name": "Substrate Ontological Governance",
+    "approved_by": "Codex Lead",
+    "approved_at": "2026-02-27T14:21:02.373556",
+    "planning_source": "from_json",
+    "planning_generated_at": "2026-02-27T14:21:02.373518"
+  },
+  "work_areas": [
+    {
+      "id": "19-0",
+      "title": "Ontological Governance Integration",
+      "description": "Integration of domain ontology tracking and drift prevention into execution contracts."
+    }
+  ],
+  "packets": [
+    {
+      "id": "ONTO-001",
+      "wbs_ref": "19.1",
+      "area_id": "19-0",
+      "title": "Define Core Domain Ontology",
+      "scope": "Implement Define Core Domain Ontology. Output: evidence artifact."
+    },
+    {
+      "id": "ONTO-002",
+      "wbs_ref": "19.2",
+      "area_id": "19-0",
+      "title": "Inject Ontology into Session Briefs",
+      "scope": "Implement Inject Ontology into Session Briefs. Output: evidence artifact."
+    },
+    {
+      "id": "ONTO-003",
+      "wbs_ref": "19.3",
+      "area_id": "19-0",
+      "title": "Enforce Ontology in Packet Schema",
+      "scope": "Implement Enforce Ontology in Packet Schema. Output: evidence artifact."
+    },
+    {
+      "id": "ONTO-004",
+      "wbs_ref": "19.4",
+      "area_id": "19-0",
+      "title": "Update Contracts and Closeout for Ontological Drift",
+      "scope": "Implement Update Contracts and Closeout for Ontological Drift. Output: evidence artifact."
+    }
+  ],
+  "dependencies": {
+    "ONTO-002": [
+      "ONTO-001"
+    ],
+    "ONTO-003": [
+      "ONTO-001"
+    ],
+    "ONTO-004": [
+      "ONTO-001",
+      "ONTO-003"
+    ]
+  }
+}

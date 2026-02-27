@@ -1,0 +1,75 @@
+{
+  "metadata": {
+    "project_name": "Your Project Name",
+    "approved_by": "your-name",
+    "approved_at": "2025-01-01T00:00:00"
+  },
+  "work_areas": [
+    {
+      "id": "1.0",
+      "title": "Phase 1: Planning",
+      "description": "Initial planning and requirements gathering"
+    },
+    {
+      "id": "2.0",
+      "title": "Phase 2: Implementation",
+      "description": "Core implementation work"
+    },
+    {
+      "id": "3.0",
+      "title": "Phase 3: Testing & Delivery",
+      "description": "Testing, documentation, and handover"
+    }
+  ],
+  "packets": [
+    {
+      "id": "WP-001",
+      "wbs_ref": "1.1",
+      "area_id": "1.0",
+      "title": "Define requirements",
+      "scope": "Document project requirements and acceptance criteria. Output: requirements.md"
+    },
+    {
+      "id": "WP-002",
+      "wbs_ref": "1.2",
+      "area_id": "1.0",
+      "title": "Design solution architecture",
+      "scope": "Create technical design based on requirements. Output: design.md"
+    },
+    {
+      "id": "WP-003",
+      "wbs_ref": "2.1",
+      "area_id": "2.0",
+      "title": "Implement core functionality",
+      "scope": "Build the main feature set as defined in design. Output: working code in src/"
+    },
+    {
+      "id": "WP-004",
+      "wbs_ref": "2.2",
+      "area_id": "2.0",
+      "title": "Implement secondary features",
+      "scope": "Build supporting features. Output: additional code in src/"
+    },
+    {
+      "id": "WP-005",
+      "wbs_ref": "3.1",
+      "area_id": "3.0",
+      "title": "Write tests",
+      "scope": "Create test suite for all implemented functionality. Output: tests/"
+    },
+    {
+      "id": "WP-006",
+      "wbs_ref": "3.2",
+      "area_id": "3.0",
+      "title": "Documentation and handover",
+      "scope": "Write user documentation and update README. Output: docs/"
+    }
+  ],
+  "dependencies": {
+    "WP-002": ["WP-001"],
+    "WP-003": ["WP-002"],
+    "WP-004": ["WP-003"],
+    "WP-005": ["WP-003", "WP-004"],
+    "WP-006": ["WP-005"]
+  }
+}

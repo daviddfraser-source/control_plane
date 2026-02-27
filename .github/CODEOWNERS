@@ -1,0 +1,9 @@
+# Default ownership
+* @daviddfraser-source
+
+# Governance-critical paths
+/.governance/ @daviddfraser-source
+/constitution.md @daviddfraser-source
+/AGENTS.md @daviddfraser-source
+/CLAUDE.md @daviddfraser-source
+/docs/governance-index.md @daviddfraser-source

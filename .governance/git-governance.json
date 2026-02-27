@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "mode": "disabled",
+  "auto_commit": false,
+  "commit_protocol_version": "1",
+  "stage_files": [
+    ".governance/wbs-state.json"
+  ]
+}

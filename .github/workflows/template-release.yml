@@ -1,0 +1,30 @@
+name: Template Release Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "template-v*"
+
+jobs:
+  build-template-bundle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build template bundle
+        run: |
+          chmod +x scripts/build-template-bundle.sh
+          ./scripts/build-template-bundle.sh
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: substrate-template
+          path: dist/*.tar.gz

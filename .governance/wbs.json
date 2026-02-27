@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "project_name": "Substrate Phase 7: UX Refinement and Delivery",
+    "approved_by": "david-fraser",
+    "approved_at": "2026-02-27",
+    "planning_source": "from_json",
+    "planning_generated_at": "2026-02-27T16:00:00.000000",
+    "phase": "7"
+  },
+  "work_areas": [
+    {
+      "id": "71-0",
+      "title": "UX Foundation",
+      "description": "Establish the new root UI structure and validate the Next.js delivery path."
+    },
+    {
+      "id": "72-0",
+      "title": "Governance Integration",
+      "description": "Integrate the governance CLI and state reporting into the new Next.js UI."
+    }
+  ],
+  "packets": [
+    {
+      "id": "UX-701",
+      "wbs_ref": "71.1",
+      "area_id": "71-0",
+      "title": "Establish Root UI Structure",
+      "scope": "Move active UX to root /ui directory, update package.json, and verify development server startup. Output: Functional Next.js app in /ui."
+    },
+    {
+      "id": "UX-702",
+      "wbs_ref": "71.2",
+      "area_id": "71-0",
+      "title": "Validate Delivery Path",
+      "scope": "Verify build, lint, and typecheck commands for the new UI structure. Output: Successful 'npm run build' in /ui."
+    }
+  ],
+  "dependencies": {
+    "UX-702": ["UX-701"]
+  }
+}

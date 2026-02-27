@@ -1,0 +1,96 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks.json",
+  "version": "2.0",
+  "description": "Substrate governance enforcement hooks for Claude Code (Opus 4.6 Agent Teams enabled)",
+  "hooks": [
+    {
+      "name": "teammate-idle-governance-check",
+      "description": "Validate governance state when a teammate goes idle - ensures packets are properly tracked",
+      "matcher": {
+        "event": "TeammateIdle"
+      },
+      "action": "run",
+      "command": "python3 .governance/wbs_cli.py validate && python3 .governance/wbs_cli.py progress --json",
+      "exit_code_2_feedback": "Governance validation failed. Check packet state before going idle."
+    },
+    {
+      "name": "task-completed-evidence-check",
+      "description": "Validate evidence requirements when a task is marked complete",
+      "matcher": {
+        "event": "TaskCompleted"
+      },
+      "action": "run",
+      "command": "python3 -c \"import sys; from pathlib import Path; state = __import__('json').load(open('.governance/wbs-state.json')); pkts = [p for p,s in state.get('packets',{}).items() if s.get('status')=='in_progress']; sys.exit(2 if pkts else 0)\"",
+      "exit_code_2_feedback": "There are still in_progress packets. Mark them done with evidence before completing."
+    },
+    {
+      "name": "block-state-file-edit",
+      "description": "Prevent direct modification of WBS state file",
+      "matcher": {
+        "tool": ["Edit", "Write"],
+        "path_pattern": "**/.governance/wbs-state.json"
+      },
+      "action": "block",
+      "message": "Direct modification of wbs-state.json is prohibited. Use governance CLI commands: python3 .governance/wbs_cli.py [claim|done|fail|reset]"
+    },
+    {
+      "name": "block-wbs-definition-edit",
+      "description": "Prevent agent modification of WBS definitions during execution",
+      "matcher": {
+        "tool": ["Edit", "Write"],
+        "path_pattern": "**/.governance/wbs.json"
+      },
+      "action": "block",
+      "message": "Modification of wbs.json requires human approval. Packet definitions are immutable during execution per constitution.md Article IV."
+    },
+    {
+      "name": "block-governance-code-edit",
+      "description": "Protect governance enforcement code",
+      "matcher": {
+        "tool": ["Edit", "Write"],
+        "path_pattern": "**/.governance/wbs_cli.py"
+      },
+      "action": "block",
+      "message": "Governance CLI code is protected. Changes require human review per constitution.md Article IV Section 3."
+    },
+    {
+      "name": "block-constitution-edit",
+      "description": "Protect constitutional document",
+      "matcher": {
+        "tool": ["Edit", "Write"],
+        "path_pattern": "**/constitution.md"
+      },
+      "action": "block",
+      "message": "Constitution amendments require human deliberation per Article VI Section 2. This file cannot be modified by agents."
+    },
+    {
+      "name": "warn-governance-directory",
+      "description": "Warn when any governance file is being modified",
+      "matcher": {
+        "tool": ["Edit", "Write"],
+        "path_pattern": "**/.governance/**"
+      },
+      "action": "warn",
+      "message": "You are modifying a governance file. Ensure this change is within packet scope and properly documented."
+    },
+    {
+      "name": "notify-session-start",
+      "description": "Show governance status at session start",
+      "matcher": {
+        "event": "session_start"
+      },
+      "action": "run",
+      "command": "python3 .governance/wbs_cli.py status 2>/dev/null || echo 'Governance CLI not initialized'"
+    },
+    {
+      "name": "post-done-validation",
+      "description": "Validate state after completion commands",
+      "matcher": {
+        "tool": "Bash",
+        "command_pattern": ".*wbs_cli\\.py\\s+done.*"
+      },
+      "action": "run_after",
+      "command": "python3 .governance/wbs_cli.py validate"
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "project_name": "Substrate Phase 6: Orchestration Enhancements",
+    "approved_by": "david-fraser",
+    "approved_at": "2026-02-26",
+    "planning_source": "from_json",
+    "planning_generated_at": "2026-02-26T13:04:16.429264",
+    "phase": "6"
+  },
+  "work_areas": [
+    {
+      "id": "10-0",
+      "title": "State Management Enhancements",
+      "description": "Schema versioning, migration system, and state integrity improvements"
+    },
+    {
+      "id": "11-0",
+      "title": "Dashboard and Real-time Updates",
+      "description": "Server-Sent Events, live dashboard, and dependency graph visualization"
+    },
+    {
+      "id": "12-0",
+      "title": "Tag-Based Dependencies (Explicit Expansion)",
+      "description": "Support tag-based dependencies with transparent expansion to packet IDs"
+    },
+    {
+      "id": "13-0",
+      "title": "Governance Review Items",
+      "description": "Constitutional review and advisory-mode implementations"
+    },
+    {
+      "id": "14-0",
+      "title": "Documentation and Integration",
+      "description": "Update docs, templates, and closeout"
+    }
+  ],
+  "packets": [
+    {
+      "id": "ORCH-001",
+      "wbs_ref": "1.1",
+      "area_id": "10-0",
+      "title": "Design state versioning schema and migration contract",
+      "scope": "Define schema_version field semantics, migration log event format, and backward compatibility rules. Output: docs/orchestration/state-versioning-contract.md with versioning rules and migration protocol."
+    },
+    {
+      "id": "ORCH-002",
+      "wbs_ref": "1.2",
+      "area_id": "10-0",
+      "title": "Implement state version detection and migration framework",
+      "scope": "Add schema_version to wbs-state.json structure, implement migration registry in wbs_common.py, add version check on state load. Output: working version detection with migration hooks."
+    },
+    {
+      "id": "ORCH-003",
+      "wbs_ref": "1.3",
+      "area_id": "10-0",
+      "title": "Add migration logging and constitutional compliance",
+      "scope": "Ensure migrations are logged per Article II Section 6, add migration events to log array, validate no silent modifications. Output: migrations logged as governance events with timestamps and agent 'system'."
+    },
+    {
+      "id": "ORCH-004",
+      "wbs_ref": "1.4",
+      "area_id": "10-0",
+      "title": "Create migration test suite and validation",
+      "scope": "Write tests for version upgrades, rollback safety, and log integrity. Output: tests/test_state_versioning.py with comprehensive migration test coverage."
+    },
+    {
+      "id": "ORCH-005",
+      "wbs_ref": "2.1",
+      "area_id": "11-0",
+      "title": "Add SSE endpoint to wbs_server.py",
+      "scope": "Implement /api/events SSE endpoint that streams state change events. Output: working SSE endpoint with connection management and heartbeat."
+    },
+    {
+      "id": "ORCH-006",
+      "wbs_ref": "2.2",
+      "area_id": "11-0",
+      "title": "Implement state change event emitter",
+      "scope": "Add event emission to claim/done/fail/reset transitions in engine.py. Events pushed to SSE clients. Output: all lifecycle transitions emit events to connected clients."
+    },
+    {
+      "id": "ORCH-007",
+      "wbs_ref": "2.3",
+      "area_id": "11-0",
+      "title": "Build real-time dashboard auto-refresh",
+      "scope": "Update dashboard HTML/JS to consume SSE events and auto-refresh packet status, progress metrics, and activity log. Output: dashboard updates without manual refresh."
+    },
+    {
+      "id": "ORCH-008",
+      "wbs_ref": "2.4",
+      "area_id": "11-0",
+      "title": "Add live Mermaid dependency graph visualization",
+      "scope": "Integrate Mermaid.js into dashboard, render dependency graph with real-time status colors (pending/in_progress/done/failed). Output: interactive dependency graph on dashboard."
+    },
+    {
+      "id": "ORCH-009",
+      "wbs_ref": "3.1",
+      "area_id": "12-0",
+      "title": "Design tag dependency contract and expansion rules",
+      "scope": "Define tag syntax (tag:name), packet tagging schema, expansion semantics, and transparency requirements. Output: docs/orchestration/tag-dependencies-contract.md with examples and edge cases."
+    },
+    {
+      "id": "ORCH-010",
+      "wbs_ref": "3.2",
+      "area_id": "12-0",
+      "title": "Implement tag index and dependency resolver",
+      "scope": "Add tags field to packet schema, build tag index on WBS load, implement tag-to-packet-ID expansion. Output: DependencyGate can resolve tag:frontend to explicit packet IDs."
+    },
+    {
+      "id": "ORCH-011",
+      "wbs_ref": "3.3",
+      "area_id": "12-0",
+      "title": "Add tag expansion logging and transparency",
+      "scope": "Log tag expansions to explicit IDs during WBS init/load, store expanded dependencies in state for auditability. Output: tag expansions visible in logs and state file."
+    },
+    {
+      "id": "ORCH-012",
+      "wbs_ref": "3.4",
+      "area_id": "12-0",
+      "title": "Update CLI commands and validation for tags",
+      "scope": "Support tag syntax in add-dep command, validate tag references during WBS validation, update graph command to show tag relationships. Output: full CLI support for tag-based dependencies."
+    },
+    {
+      "id": "ORCH-013",
+      "wbs_ref": "4.1",
+      "area_id": "13-0",
+      "title": "Draft constitutional amendment for hook boundaries",
+      "scope": "Analyze hook system against Articles I (scope), IV (protected resources), and VI (human authority). Output: docs/orchestration/hook-system-constitutional-review.md with amendment proposal or rejection rationale."
+    },
+    {
+      "id": "ORCH-014",
+      "wbs_ref": "4.2",
+      "area_id": "13-0",
+      "title": "Implement capability-based claim suggestion (advisory only)",
+      "scope": "Add claim-suggest command that analyzes packet required_capabilities against agent profiles and recommends best match. Output: python3 .governance/wbs_cli.py claim-suggest <id> returns ranked agent recommendations."
+    },
+    {
+      "id": "ORCH-015",
+      "wbs_ref": "4.3",
+      "area_id": "13-0",
+      "title": "Design skill-based hook permissions model",
+      "scope": "If ORCH-013 approves hooks, design permission model based on .governance/skill-permissions.json pattern. Output: docs/orchestration/hook-permissions-design.md with sandbox rules."
+    },
+    {
+      "id": "ORCH-016",
+      "wbs_ref": "4.4",
+      "area_id": "13-0",
+      "title": "Implement hook execution framework (if approved)",
+      "scope": "Add hooks array to packet schema, implement hook executor with sandbox constraints, log all hook executions. Output: working hook system with constitutional compliance."
+    },
+    {
+      "id": "ORCH-017",
+      "wbs_ref": "5.1",
+      "area_id": "14-0",
+      "title": "Update governance documentation for new features",
+      "scope": "Update AGENTS.md, CLAUDE.md, architecture.md, and governance-workflow-codex.md with new commands and capabilities. Output: all governance docs reflect new features."
+    },
+    {
+      "id": "ORCH-018",
+      "wbs_ref": "5.2",
+      "area_id": "14-0",
+      "title": "Update templates to use new tag-based dependencies",
+      "scope": "Refactor templates/wbs-codex-minimal.json and wbs-codex-full.json to demonstrate tag usage. Output: templates use tags where appropriate with clear examples."
+    },
+    {
+      "id": "ORCH-019",
+      "wbs_ref": "5.3",
+      "area_id": "14-0",
+      "title": "Create orchestration improvements demo and test suite",
+      "scope": "Build end-to-end demo showing state versioning, real-time dashboard, tags, and claim-suggest. Output: tests/test_orchestration_enhancements.py and demo script."
+    },
+    {
+      "id": "ORCH-020",
+      "wbs_ref": "5.4",
+      "area_id": "14-0",
+      "title": "Drift assessment and closeout for orchestration improvements",
+      "scope": "Review all implemented features against planned scope, document any drift, record residual risks. Output: docs/orchestration/drift-assessment-orchestration-2026-02.md with closeout report."
+    }
+  ],
+  "dependencies": {
+    "ORCH-002": [
+      "ORCH-001"
+    ],
+    "ORCH-003": [
+      "ORCH-002"
+    ],
+    "ORCH-004": [
+      "ORCH-003"
+    ],
+    "ORCH-006": [
+      "ORCH-005"
+    ],
+    "ORCH-007": [
+      "ORCH-006"
+    ],
+    "ORCH-008": [
+      "ORCH-007"
+    ],
+    "ORCH-010": [
+      "ORCH-009"
+    ],
+    "ORCH-011": [
+      "ORCH-010"
+    ],
+    "ORCH-012": [
+      "ORCH-011"
+    ],
+    "ORCH-015": [
+      "ORCH-013"
+    ],
+    "ORCH-016": [
+      "ORCH-015"
+    ],
+    "ORCH-017": [
+      "ORCH-004",
+      "ORCH-008",
+      "ORCH-012",
+      "ORCH-014"
+    ],
+    "ORCH-018": [
+      "ORCH-012",
+      "ORCH-017"
+    ],
+    "ORCH-019": [
+      "ORCH-004",
+      "ORCH-008",
+      "ORCH-012",
+      "ORCH-014"
+    ],
+    "ORCH-020": [
+      "ORCH-019"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $# -lt 2 ]]; then
+  echo "Usage: scripts/gc-done PACKET-ID 'evidence string' [none|declared] [risk-file]"
+  exit 1
+fi
+risk_ack="${3:-none}"
+risk_file="${4:-}"
+if [[ -n "${risk_file}" ]]; then
+  python3 .governance/wbs_cli.py done "$1" gemini "$2" --risk "${risk_ack}" --risk-file "${risk_file}"
+else
+  python3 .governance/wbs_cli.py done "$1" gemini "$2" --risk "${risk_ack}"
+fi

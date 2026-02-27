@@ -1,0 +1,16 @@
+{
+  "allowed_roots": [
+    ".",
+    "./skills",
+    "./docs",
+    "./.governance"
+  ],
+  "allowed_commands": [
+    "bash",
+    "python3",
+    "sh",
+    "node",
+    "npm",
+    "npx"
+  ]
+}

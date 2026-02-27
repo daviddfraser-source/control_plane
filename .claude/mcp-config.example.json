@@ -1,0 +1,55 @@
+{
+  "$schema": "https://claude.ai/schemas/mcp-config.json",
+  "description": "Example MCP configuration for Substrate governance integration",
+  "instructions": [
+    "Copy this file to ~/.claude/mcp_servers.json (global) or .claude/mcp_servers.json (project)",
+    "Update the 'cwd' path to your project directory",
+    "Restart Claude Code to load the MCP server"
+  ],
+  "mcpServers": {
+    "substrate-governance": {
+      "command": "python3",
+      "args": [".governance/mcp_server.py"],
+      "cwd": "/path/to/your/substrate/project",
+      "description": "Substrate WBS governance operations",
+      "env": {
+        "PYTHONPATH": "src"
+      }
+    }
+  },
+  "usage": {
+    "available_tools": [
+      {
+        "name": "wbs_ready",
+        "description": "List packets ready to claim",
+        "example": "What packets can I work on?"
+      },
+      {
+        "name": "wbs_claim",
+        "description": "Claim a packet for execution",
+        "example": "Claim packet UPG-001"
+      },
+      {
+        "name": "wbs_done",
+        "description": "Mark packet complete with evidence",
+        "example": "Complete UPG-001 with evidence: Created src/auth.py, tests pass"
+      },
+      {
+        "name": "wbs_status",
+        "description": "View current governance state",
+        "example": "Show me the current project status"
+      },
+      {
+        "name": "wbs_scope",
+        "description": "View packet requirements",
+        "example": "What are the requirements for UPG-002?"
+      }
+    ],
+    "benefits": [
+      "Native tool integration (no bash wrapper)",
+      "Structured responses with JSON data",
+      "Better error handling and validation",
+      "Type-safe parameters"
+    ]
+  }
+}

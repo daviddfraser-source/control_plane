@@ -1,0 +1,48 @@
+# Project artifacts
+*.pyc
+__pycache__/
+.DS_Store
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+venv/
+env/
+node_modules/
+**/node_modules/
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.pid
+out.txt
+
+# Frontend build artifacts
+.next/
+**/.next/
+
+# WBS state file - generated at runtime, not committed
+# The definition (wbs.json) IS committed
+.governance/wbs-state.json
+.governance/activity-log.jsonl
+.governance/residual-risk-register.json
+
+# Meta/planning directory (not part of template)
+.meta/
+
+# Generated session context artifacts
+AGENTS.session.md
+CLAUDE.session.md
+docs/session-brief.md
+.governance/session-brief.json

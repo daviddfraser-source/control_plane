@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Substrate Configuration",
+  "type": "object",
+  "required": [
+    "project_name",
+    "default_agent",
+    "dashboard_port",
+    "wbs_template",
+    "wbs_file",
+    "enable_skills",
+    "ci_profile"
+  ],
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "default_agent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dashboard_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "wbs_template": {
+      "type": "string",
+      "minLength": 1
+    },
+    "wbs_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "enable_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "ci_profile": {
+      "type": "string",
+      "enum": ["minimal", "full"]
+    }
+  },
+  "additionalProperties": false
+}

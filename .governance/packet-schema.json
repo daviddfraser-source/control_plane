@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.substrate/packet-schema.json",
+  "title": "WBS Packet Standard",
+  "description": "Canonical packet schema for governance, execution, and packet viewer rendering.",
+  "type": "object",
+  "required": [
+    "packet_id",
+    "wbs_refs",
+    "title",
+    "purpose",
+    "status",
+    "owner",
+    "priority",
+    "preconditions",
+    "required_inputs",
+    "required_actions",
+    "required_outputs",
+    "validation_checks",
+    "exit_criteria",
+    "halt_conditions"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Globally unique packet identifier."
+    },
+    "wbs_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "One or more WBS references covered by this packet (for example: 3.1.1)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10
+    },
+    "authority": {
+      "type": "string",
+      "description": "Governance or policy authority for this packet."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "PENDING",
+        "IN_PROGRESS",
+        "BLOCKED",
+        "DONE",
+        "FAILED"
+      ]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Responsible operator or team for execution."
+    },
+    "executor": {
+      "type": "string",
+      "description": "Optional executor identity when distinct from owner."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "description": "Optional packet class (for example: SPEC, EXECUTION, PILOT)."
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "External packet/scope references."
+    },
+    "required_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional capability tags required for claim-time assignment checks."
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exit_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "halt_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domain_entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional recommended entities affected by this packet to prevent ontological drift (e.g., ['Packet', 'Work Area'])."
+    },
+    "implementation_spec": {
+      "type": "object",
+      "description": "Optional detailed section for long-form engineering packets.",
+      "properties": {
+        "objective": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/implementation_step"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verification_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "success_metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "non_goals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "implementation_step": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

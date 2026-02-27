@@ -1,0 +1,38 @@
+{
+  "users": [
+    {
+      "id": "developer",
+      "name": "Developer",
+      "email": "developer@example.com",
+      "roles": [
+        "developer"
+      ],
+      "password_hash": "fd13f1ab6dcae13fa54196957842e83c60e29e7b3f99b1ef6f18ed5145de9eae",
+      "salt": "0ed5512148f8948e4a83d7651183eeba",
+      "active": true
+    },
+    {
+      "id": "admin",
+      "name": "Admin",
+      "email": "admin@example.com",
+      "roles": [
+        "admin",
+        "developer"
+      ],
+      "password_hash": "6fe8d11f3ee9040d4fec3ec8721954c73c471e8197f149857f09f265120244d5",
+      "salt": "bbb150959aad6782619f02e3ad9f6f5d",
+      "active": true
+    },
+    {
+      "id": "viewer",
+      "name": "Viewer",
+      "email": "viewer@example.com",
+      "roles": [
+        "viewer"
+      ],
+      "password_hash": "1251511e220fa85ea82d10566988dbc013af68b3f861355880552b33ecbebfdb",
+      "salt": "73878dc52fc0f4e0fdda7fd55cc4fe5a",
+      "active": true
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "reader": ["read:article", "read:comment"],
+  "editor": ["read:article", "create:comment", "update:article"],
+  "admin": ["*"],
+  "support": ["read:article", "read:user"]
+}

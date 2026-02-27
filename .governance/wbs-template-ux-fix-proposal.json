@@ -1,0 +1,359 @@
+{
+  "area": {
+    "id": "8-0",
+    "title": "Template UX Consistency Remediation",
+    "description": "Replace Ant Design implementations with custom component library for visual and architectural consistency"
+  },
+  "packets": [
+    {
+      "packet_id": "P5-37-TEMPLATE-UX-AUDIT",
+      "wbs_refs": ["8.1"],
+      "area_id": "8-0",
+      "title": "Audit template pages and document component mapping",
+      "purpose": "Identify all Ant Design usages and map to existing custom components.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "HIGH",
+      "preconditions": [],
+      "required_inputs": [
+        "templates/ai-substrate/app/*/page.tsx (template pages)",
+        "templates/ai-substrate/components/ui/*.tsx",
+        "templates/ai-substrate/components/governance/*.tsx"
+      ],
+      "required_actions": [
+        "Document all Ant Design components used across template pages",
+        "Map each antd component to existing custom component equivalent",
+        "Identify any missing custom components that need to be created",
+        "Create component migration checklist per template page"
+      ],
+      "required_outputs": [
+        "docs/codex-migration/template-ux-remediation-plan.md",
+        "Component mapping matrix (antd → custom)",
+        "List of missing components to create"
+      ],
+      "validation_checks": [
+        "All 11 template pages catalogued",
+        "Component mapping covers 100% of antd usage",
+        "Migration plan includes validation criteria"
+      ],
+      "exit_criteria": [
+        "Complete audit document exists",
+        "Component mapping approved",
+        "Ready to start page-by-page migration"
+      ],
+      "halt_conditions": [
+        "Existing custom components insufficient for migration",
+        "Design system conflicts identified"
+      ]
+    },
+    {
+      "packet_id": "P5-38-TEMPLATE-KANBAN-FIX",
+      "wbs_refs": ["8.2"],
+      "area_id": "8-0",
+      "title": "Migrate /kanban page to custom components",
+      "purpose": "Replace Ant Design with custom component library in kanban template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "HIGH",
+      "preconditions": ["P5-37-TEMPLATE-UX-AUDIT complete"],
+      "required_inputs": [
+        "templates/ai-substrate/app/kanban/page.tsx",
+        "docs/codex-migration/template-ux-remediation-plan.md"
+      ],
+      "required_actions": [
+        "Replace antd components with custom components from /components/ui/",
+        "Maintain drag-drop functionality using @dnd-kit",
+        "Apply CSS variable-based styling",
+        "Ensure visual consistency with dashboard page"
+      ],
+      "required_outputs": [
+        "Updated templates/ai-substrate/app/kanban/page.tsx",
+        "Visual regression proof (screenshot or description)"
+      ],
+      "validation_checks": [
+        "npm run dev succeeds",
+        "GET /kanban returns 200",
+        "No antd imports remain in file",
+        "Visual consistency verified against dashboard",
+        "Drag-drop functionality works"
+      ],
+      "exit_criteria": [
+        "Kanban page uses only custom components",
+        "Functional parity maintained",
+        "Visual consistency with existing pages"
+      ],
+      "halt_conditions": [
+        "Missing custom component blocks progress",
+        "Drag-drop library incompatible with custom components"
+      ]
+    },
+    {
+      "packet_id": "P5-39-TEMPLATE-GANTT-FIX",
+      "wbs_refs": ["8.3"],
+      "area_id": "8-0",
+      "title": "Migrate /gantt page to custom components",
+      "purpose": "Replace Ant Design with custom component library in gantt template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": [
+        "templates/ai-substrate/app/gantt/page.tsx",
+        "Component patterns from P5-38"
+      ],
+      "required_actions": [
+        "Replace antd components with custom components",
+        "Maintain gantt-task-react integration",
+        "Apply consistent styling"
+      ],
+      "required_outputs": [
+        "Updated templates/ai-substrate/app/gantt/page.tsx"
+      ],
+      "validation_checks": [
+        "npm run dev succeeds",
+        "GET /gantt returns 200",
+        "No antd imports remain"
+      ],
+      "exit_criteria": [
+        "Gantt page uses only custom components",
+        "Visual consistency maintained"
+      ],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-40-TEMPLATE-TIMELINE-FIX",
+      "wbs_refs": ["8.4"],
+      "area_id": "8-0",
+      "title": "Migrate /timeline page to custom components",
+      "purpose": "Replace Ant Design with custom component library in timeline template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/timeline/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/timeline/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /timeline returns 200", "No antd imports remain"],
+      "exit_criteria": ["Timeline page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-41-TEMPLATE-ASSISTANT-FIX",
+      "wbs_refs": ["8.5"],
+      "area_id": "8-0",
+      "title": "Migrate /assistant page to custom components",
+      "purpose": "Replace Ant Design with custom component library in assistant template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/assistant/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/assistant/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /assistant returns 200", "No antd imports remain"],
+      "exit_criteria": ["Assistant page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-42-TEMPLATE-CHAT-FIX",
+      "wbs_refs": ["8.6"],
+      "area_id": "8-0",
+      "title": "Migrate /chat page to custom components",
+      "purpose": "Replace Ant Design with custom component library in chat template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/chat/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/chat/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /chat returns 200", "No antd imports remain"],
+      "exit_criteria": ["Chat page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-43-TEMPLATE-KNOWLEDGE-FIX",
+      "wbs_refs": ["8.7"],
+      "area_id": "8-0",
+      "title": "Migrate /knowledge page to custom components",
+      "purpose": "Replace Ant Design with custom component library in knowledge template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/knowledge/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/knowledge/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /knowledge returns 200", "No antd imports remain"],
+      "exit_criteria": ["Knowledge page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-44-TEMPLATE-DOCUMENTS-FIX",
+      "wbs_refs": ["8.8"],
+      "area_id": "8-0",
+      "title": "Migrate /documents page to custom components",
+      "purpose": "Replace Ant Design with custom component library in documents template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/documents/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/documents/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /documents returns 200", "No antd imports remain"],
+      "exit_criteria": ["Documents page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-45-TEMPLATE-APPROVALS-FIX",
+      "wbs_refs": ["8.9"],
+      "area_id": "8-0",
+      "title": "Migrate /approvals page to custom components",
+      "purpose": "Replace Ant Design with custom component library in approvals template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/approvals/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/approvals/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /approvals returns 200", "No antd imports remain"],
+      "exit_criteria": ["Approvals page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-46-TEMPLATE-PROMPT-LAB-FIX",
+      "wbs_refs": ["8.10"],
+      "area_id": "8-0",
+      "title": "Migrate /prompt-lab page to custom components",
+      "purpose": "Replace Ant Design with custom component library in prompt-lab template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/prompt-lab/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/prompt-lab/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /prompt-lab returns 200", "No antd imports remain"],
+      "exit_criteria": ["Prompt-lab page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-47-TEMPLATE-AGENT-CONSOLE-FIX",
+      "wbs_refs": ["8.11"],
+      "area_id": "8-0",
+      "title": "Migrate /agent-console page to custom components",
+      "purpose": "Replace Ant Design with custom component library in agent-console template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/agent-console/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/agent-console/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /agent-console returns 200", "No antd imports remain"],
+      "exit_criteria": ["Agent-console page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-48-TEMPLATE-NEW-FIX",
+      "wbs_refs": ["8.12"],
+      "area_id": "8-0",
+      "title": "Migrate /new page to custom components",
+      "purpose": "Replace Ant Design with custom component library in new item template.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "MEDIUM",
+      "preconditions": ["P5-38-TEMPLATE-KANBAN-FIX complete"],
+      "required_inputs": ["templates/ai-substrate/app/new/page.tsx"],
+      "required_actions": ["Replace antd components with custom components"],
+      "required_outputs": ["Updated templates/ai-substrate/app/new/page.tsx"],
+      "validation_checks": ["npm run dev succeeds", "GET /new returns 200", "No antd imports remain"],
+      "exit_criteria": ["New page uses only custom components"],
+      "halt_conditions": []
+    },
+    {
+      "packet_id": "P5-49-TEMPLATE-UX-CLEANUP",
+      "wbs_refs": ["8.13"],
+      "area_id": "8-0",
+      "title": "Remove Ant Design dependency and validate UX consistency",
+      "purpose": "Remove antd from package.json and verify all template pages maintain consistency.",
+      "status": "PENDING",
+      "owner": "claude",
+      "priority": "HIGH",
+      "preconditions": [
+        "P5-38-TEMPLATE-KANBAN-FIX complete",
+        "P5-39-TEMPLATE-GANTT-FIX complete",
+        "P5-40-TEMPLATE-TIMELINE-FIX complete",
+        "P5-41-TEMPLATE-ASSISTANT-FIX complete",
+        "P5-42-TEMPLATE-CHAT-FIX complete",
+        "P5-43-TEMPLATE-KNOWLEDGE-FIX complete",
+        "P5-44-TEMPLATE-DOCUMENTS-FIX complete",
+        "P5-45-TEMPLATE-APPROVALS-FIX complete",
+        "P5-46-TEMPLATE-PROMPT-LAB-FIX complete",
+        "P5-47-TEMPLATE-AGENT-CONSOLE-FIX complete",
+        "P5-48-TEMPLATE-NEW-FIX complete"
+      ],
+      "required_inputs": [
+        "All migrated template pages",
+        "templates/ai-substrate/package.json"
+      ],
+      "required_actions": [
+        "Remove antd and @ant-design/* packages from package.json",
+        "Run npm install to update lockfile",
+        "Verify npm run build succeeds",
+        "Test all 11 template routes return 200",
+        "Visual consistency check across all pages",
+        "Bundle size comparison before/after"
+      ],
+      "required_outputs": [
+        "Updated package.json without antd",
+        "Build validation evidence",
+        "Visual consistency report"
+      ],
+      "validation_checks": [
+        "npm run build succeeds",
+        "All template routes return 200",
+        "No antd imports in codebase (grep verification)",
+        "Bundle size reduced",
+        "Visual consistency across all pages confirmed"
+      ],
+      "exit_criteria": [
+        "Ant Design completely removed",
+        "All template pages use custom components",
+        "Build and tests pass",
+        "Visual consistency validated"
+      ],
+      "halt_conditions": [
+        "Unexpected antd dependency found in other areas"
+      ]
+    }
+  ],
+  "dependencies": {
+    "P5-38-TEMPLATE-KANBAN-FIX": ["P5-37-TEMPLATE-UX-AUDIT"],
+    "P5-39-TEMPLATE-GANTT-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-40-TEMPLATE-TIMELINE-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-41-TEMPLATE-ASSISTANT-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-42-TEMPLATE-CHAT-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-43-TEMPLATE-KNOWLEDGE-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-44-TEMPLATE-DOCUMENTS-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-45-TEMPLATE-APPROVALS-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-46-TEMPLATE-PROMPT-LAB-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-47-TEMPLATE-AGENT-CONSOLE-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-48-TEMPLATE-NEW-FIX": ["P5-38-TEMPLATE-KANBAN-FIX"],
+    "P5-49-TEMPLATE-UX-CLEANUP": [
+      "P5-38-TEMPLATE-KANBAN-FIX",
+      "P5-39-TEMPLATE-GANTT-FIX",
+      "P5-40-TEMPLATE-TIMELINE-FIX",
+      "P5-41-TEMPLATE-ASSISTANT-FIX",
+      "P5-42-TEMPLATE-CHAT-FIX",
+      "P5-43-TEMPLATE-KNOWLEDGE-FIX",
+      "P5-44-TEMPLATE-DOCUMENTS-FIX",
+      "P5-45-TEMPLATE-APPROVALS-FIX",
+      "P5-46-TEMPLATE-PROMPT-LAB-FIX",
+      "P5-47-TEMPLATE-AGENT-CONSOLE-FIX",
+      "P5-48-TEMPLATE-NEW-FIX"
+    ]
+  }
+}

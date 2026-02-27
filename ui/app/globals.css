@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══ Design Token System (parity with .governance/static/index.html) ═══ */
+:root {
+  /* — Color Scales — */
+  --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-200: #bfdbfe;
+  --primary-300: #93c5fd; --primary-400: #60a5fa; --primary-500: #3b82f6;
+  --primary-600: #2563eb; --primary-700: #1d4ed8; --primary-800: #1e40af; --primary-900: #1e3a8a;
+  --primary: #2563eb; --primary-dark: #1d4ed8;
+
+  --success-50: #ecfdf5; --success-100: #d1fae5; --success-200: #a7f3d0;
+  --success-500: #10b981; --success-600: #059669; --success-700: #047857;
+  --success: #059669;
+
+  --warning-50: #fffbeb; --warning-100: #fef3c7; --warning-200: #fde68a;
+  --warning-500: #f59e0b; --warning-600: #d97706; --warning-700: #b45309;
+  --warning: #d97706;
+
+  --danger-50: #fef2f2; --danger-100: #fee2e2; --danger-200: #fecaca;
+  --danger-500: #ef4444; --danger-600: #dc2626; --danger-700: #b91c1c;
+  --danger: #dc2626;
+
+  --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+  --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280;
+  --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+
+  /* — Semantic Aliases (Light) — */
+  --bg-primary: #ffffff; --bg-secondary: #f9fafb; --bg-elevated: #ffffff;
+  --bg-inset: #f3f4f6; --bg-canvas: #f3f4f6;
+  --border-default: #e5e7eb; --border-muted: #f3f4f6; --border-strong: #d1d5db;
+  --text-primary: #111827; --text-secondary: #4b5563; --text-tertiary: #9ca3af;
+  --text-inverse: #ffffff; --text-link: #2563eb;
+
+  /* — Spacing (4px base) — */
+  --space-0: 0; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+  /* — Typography — */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 13px; --text-base: 14px; --text-lg: 16px;
+  --text-xl: 18px; --text-2xl: 20px; --text-3xl: 24px; --text-4xl: 28px;
+  --font-normal: 400; --font-medium: 500; --font-semibold: 600; --font-bold: 700;
+  --leading-tight: 1.25; --leading-normal: 1.5; --leading-relaxed: 1.65;
+
+  /* — Shadows — */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.2);
+
+  /* — Radii — */
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
+  --radius-xl: 12px; --radius-2xl: 16px; --radius-full: 9999px;
+
+  /* — Transitions — */
+  --transition-fast: 100ms ease; --transition-base: 150ms ease; --transition-slow: 300ms ease;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* — Z-Index — */
+  --z-dropdown: 100; --z-sticky: 200; --z-overlay: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+}
+
+/* ═══ Dark Mode ═══ */
+[data-theme="dark"] {
+  --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-elevated: #1e293b;
+  --bg-inset: #0b1120; --bg-canvas: #0f172a;
+  --border-default: #334155; --border-muted: #1e293b; --border-strong: #475569;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-tertiary: #64748b;
+  --text-inverse: #0f172a; --text-link: #60a5fa;
+  --gray-50: #1e293b; --gray-100: #1e293b; --gray-200: #334155;
+  --gray-300: #475569; --gray-400: #64748b; --gray-500: #94a3b8;
+  --gray-600: #cbd5e1; --gray-700: #e2e8f0; --gray-800: #f1f5f9; --gray-900: #f8fafc;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+}
+
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.3s ease, color 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* ═══ Tailwind-compatible utility mappings ═══ */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+  }
+}
+
+@layer utilities {
+  /* Background tokens */
+  .bg-token-primary { background-color: var(--primary); }
+  .bg-token-surface { background-color: var(--bg-primary); }
+  .bg-token-secondary { background-color: var(--bg-secondary); }
+  .bg-token-elevated { background-color: var(--bg-elevated); }
+  .bg-token-inset { background-color: var(--bg-inset); }
+  .bg-token-canvas { background-color: var(--bg-canvas); }
+
+  /* Text tokens */
+  .text-token-primary { color: var(--text-primary); }
+  .text-token-secondary { color: var(--text-secondary); }
+  .text-token-tertiary { color: var(--text-tertiary); }
+  .text-token-inverse { color: var(--text-inverse); }
+  .text-token-link { color: var(--text-link); }
+
+  /* Border tokens */
+  .border-token-default { border-color: var(--border-default); }
+  .border-token-muted { border-color: var(--border-muted); }
+  .border-token-strong { border-color: var(--border-strong); }
+  .border-token-border-default { border-color: var(--border-default); }
+  .border-token-border-strong { border-color: var(--border-strong); }
+  .bg-token-border-default { background-color: var(--border-default); }
+
+  /* Shadow tokens */
+  .shadow-token-xs { box-shadow: var(--shadow-xs); }
+  .shadow-token-sm { box-shadow: var(--shadow-sm); }
+  .shadow-token-md { box-shadow: var(--shadow-md); }
+  .shadow-token-lg { box-shadow: var(--shadow-lg); }
+  .shadow-token-xl { box-shadow: var(--shadow-xl); }
+  .shadow-token-2xl { box-shadow: var(--shadow-2xl); }
+
+  /* Status colors */
+  .text-status-success { color: var(--success); }
+  .text-status-warning { color: var(--warning); }
+  .text-status-danger { color: var(--danger); }
+  .bg-status-success { background-color: var(--success-50); }
+  .bg-status-warning { background-color: var(--warning-50); }
+  .bg-status-danger { background-color: var(--danger-50); }
+
+  /* Font families */
+  .font-token-sans { font-family: var(--font-sans); }
+  .font-token-mono { font-family: var(--font-mono); }
+}

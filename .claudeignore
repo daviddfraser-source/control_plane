@@ -1,0 +1,31 @@
+# Python/build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Governance runtime state (use CLI views)
+.governance/wbs-state.json
+
+# Large/system dirs
+node_modules/
+.git/
+.venv/
+venv/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS/log
+.DS_Store
+Thumbs.db
+*.log

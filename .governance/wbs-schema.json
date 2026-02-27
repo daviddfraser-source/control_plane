@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.substrate/wbs-schema.json",
+  "title": "WBS Definition Schema",
+  "description": "Baseline schema for active WBS definitions used by the governance CLI/server.",
+  "type": "object",
+  "required": [
+    "metadata",
+    "work_areas",
+    "packets",
+    "dependencies"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": [
+        "project_name",
+        "approved_by",
+        "approved_at"
+      ],
+      "properties": {
+        "project_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_at": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "work_areas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/work_area"
+      }
+    },
+    "packets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/base_packet"
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "work_area": {
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "base_packet": {
+      "type": "object",
+      "required": [
+        "id",
+        "wbs_ref",
+        "area_id",
+        "title",
+        "scope"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wbs_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

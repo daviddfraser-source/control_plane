@@ -1,0 +1,94 @@
+{
+  "project_name": "Substrate",
+  "project_type": "governance_framework",
+  "version": "1.2.0",
+  "default_agent": "claude",
+  "model": "claude-opus-4-6",
+  "governance": {
+    "enabled": true,
+    "cli_path": ".governance/wbs_cli.py",
+    "mcp_server": ".governance/mcp_server.py",
+    "state_readonly": true,
+    "require_evidence": true,
+    "constitutional_authority": "constitution.md"
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "auto",
+  "thinking": {
+    "type": "adaptive",
+    "effort": "high"
+  },
+  "workflows": {
+    "check_ready": {
+      "description": "List packets ready to claim",
+      "command": "python3 .governance/wbs_cli.py ready"
+    },
+    "claim_packet": {
+      "description": "Claim a packet for Claude",
+      "command": "python3 .governance/wbs_cli.py claim {packet_id} claude"
+    },
+    "complete_packet": {
+      "description": "Mark packet complete with evidence",
+      "command": "python3 .governance/wbs_cli.py done {packet_id} claude {evidence}"
+    },
+    "check_status": {
+      "description": "View full project status",
+      "command": "python3 .governance/wbs_cli.py status"
+    },
+    "view_scope": {
+      "description": "View packet scope and requirements",
+      "command": "python3 .governance/wbs_cli.py scope {packet_id}"
+    },
+    "view_log": {
+      "description": "View activity log",
+      "command": "python3 .governance/wbs_cli.py log 20"
+    }
+  },
+  "protected_paths": [
+    ".governance/wbs.json",
+    ".governance/wbs-state.json",
+    ".governance/wbs_cli.py",
+    ".governance/wbs_server.py",
+    ".governance/mcp_server.py",
+    "constitution.md"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(python3 .governance/wbs_cli.py *)",
+      "Bash(python3 .governance/wbs_server.py *)",
+      "Bash(python3 .governance/mcp_server.py --test)",
+      "Read(.governance/*)",
+      "Read(constitution.md)",
+      "Read(AGENTS.md)",
+      "Write(.governance/wbs_snapshot.txt)",
+      "Edit(.governance/wbs_server.py)"
+    ],
+    "deny": [
+      "Edit(.governance/wbs-state.json)",
+      "Write(.governance/wbs-state.json)",
+      "Edit(.governance/wbs.json)",
+      "Write(.governance/wbs.json)",
+      "Edit(.governance/wbs_cli.py)",
+      "Edit(constitution.md)"
+    ]
+  },
+  "context": {
+    "auto_include": [
+      "CLAUDE.md",
+      "AGENTS.md"
+    ],
+    "reference_on_demand": [
+      "constitution.md",
+      "docs/PLAYBOOK.md"
+    ]
+  },
+  "mcp_servers": {
+    "substrate-governance": {
+      "command": "python3",
+      "args": [".governance/mcp_server.py"],
+      "description": "Substrate governance operations as native MCP tools"
+    }
+  }
+}

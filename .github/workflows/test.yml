@@ -1,0 +1,189 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Governance runtime state guard
+        run: |
+          chmod +x scripts/governance-state-guard.sh
+          ./scripts/governance-state-guard.sh --ci
+
+      - name: Git-native governance protocol checks
+        run: |
+          python3 .governance/wbs_cli.py git-protocol --json >/tmp/git-protocol.json
+          python3 .governance/wbs_cli.py --json git-verify-ledger --strict >/tmp/git-ledger-verify.json
+
+
+      - name: Governance integrity checks
+        run: |
+          chmod +x scripts/governance-integrity-check.sh
+          ./scripts/governance-integrity-check.sh
+
+      - name: Run quality gates
+        run: |
+          chmod +x scripts/quality-gates.sh
+          ./scripts/quality-gates.sh
+
+      - name: Verify templates
+        run: |
+          for template in templates/*.json; do
+            echo "Validating $template..."
+            python3 -c "import json; json.load(open('$template'))"
+          done
+          echo "All templates valid"
+
+  python-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Syntax check
+        run: |
+          python3 -m py_compile .governance/wbs_cli.py .governance/wbs_server.py start.py
+
+      - name: Unit and API tests
+        run: |
+          python3 -m unittest discover -s tests -v
+
+  skills-agent-eval-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install promptfoo
+        run: npm install -g promptfoo
+
+      - name: Run agent-eval smoke
+        run: |
+          chmod +x skills/agent-eval/scripts/*.sh
+          ./skills/agent-eval/scripts/smoke.sh
+
+  skills-security-gates-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Script sanity
+        run: |
+          chmod +x skills/security-gates/scripts/*.sh
+          bash -n skills/security-gates/scripts/smoke.sh
+          bash -n skills/security-gates/scripts/run.sh
+
+      - name: Semgrep scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: auto
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          ignore-unfixed: true
+
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+
+  skills-pr-review-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - name: Run pr-review-automation smoke
+        run: |
+          chmod +x skills/pr-review-automation/scripts/*.sh
+          ./skills/pr-review-automation/scripts/smoke.sh
+          ./skills/pr-review-automation/scripts/run.sh
+
+  skills-precommit-governance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run precommit-governance
+        run: |
+          chmod +x skills/precommit-governance/scripts/*.sh
+          ./skills/precommit-governance/scripts/smoke.sh
+          ./skills/precommit-governance/scripts/install.sh
+          ./skills/precommit-governance/scripts/run.sh
+
+  skills-ui-regression:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm install -g @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Start dashboard server
+        run: |
+          python3 .governance/wbs_server.py 8090 >/tmp/wbs-server.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:8090/api/status >/dev/null
+
+      - name: Run ui-regression skill
+        run: |
+          chmod +x skills/ui-regression/scripts/*.sh
+          UI_BASE_URL=http://127.0.0.1:8090 ./skills/ui-regression/scripts/smoke.sh
+          UI_BASE_URL=http://127.0.0.1:8090 ./skills/ui-regression/scripts/run.sh

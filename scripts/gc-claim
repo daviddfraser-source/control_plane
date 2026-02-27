@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $# -lt 1 ]]; then
+  echo "Usage: scripts/gc-claim PACKET-ID"
+  exit 1
+fi
+python3 .governance/wbs_cli.py claim "$1" gemini

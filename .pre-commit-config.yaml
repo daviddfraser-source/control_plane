@@ -1,0 +1,45 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: python-syntax
+        name: Python syntax check
+        entry: python3 -m py_compile .governance/wbs_cli.py .governance/wbs_server.py start.py
+        language: system
+        pass_filenames: false
+
+      - id: wbs-validate
+        name: WBS validate
+        entry: python3 .governance/wbs_cli.py validate --strict
+        language: system
+        pass_filenames: false
+
+      - id: packet-validate-template
+        name: Packet schema validate (template)
+        entry: python3 .governance/wbs_cli.py validate-packet templates/wbs-codex-refactor.json
+        language: system
+        pass_filenames: false
+
+
+      - id: governance-integrity-fast
+        name: Governance integrity fast checks
+        entry: bash scripts/governance-integrity-check.sh
+        language: system
+        pass_filenames: false
+      - id: shell-lint-if-available
+        name: Shell lint (if shellcheck installed)
+        entry: bash -lc 'command -v shellcheck >/dev/null 2>&1 && shellcheck scripts/*.sh || echo "shellcheck not installed; skipping"'
+        language: system
+        pass_filenames: false
+
+      - id: governance-state-guard
+        name: Governance runtime state guard
+        entry: bash scripts/governance-state-guard.sh --commit-msg
+        language: system
+        stages: [commit-msg]
