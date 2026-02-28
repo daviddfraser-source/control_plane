@@ -13,18 +13,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Shipping hygiene check
+        run: |
+          chmod +x scripts/shipping-check.sh
+          ./scripts/shipping-check.sh
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Build template bundle
+      - name: Build source-only release bundle
         run: |
-          chmod +x scripts/build-template-bundle.sh
-          ./scripts/build-template-bundle.sh
+          chmod +x scripts/package-source-release.sh
+          ./scripts/package-source-release.sh "${GITHUB_REF_NAME:-${GITHUB_SHA}}"
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: substrate-template
+          name: substrate-source-release
           path: dist/*.tar.gz

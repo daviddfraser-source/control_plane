@@ -4,21 +4,21 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-WBS_TEMPLATE="${1:-.governance/wbs.json}"
 WBS_FILE=".governance/wbs.json"
 STATE_FILE=".governance/wbs-state.json"
 
-if [[ ! -f "${WBS_TEMPLATE}" ]]; then
-  echo "Missing WBS template: ${WBS_TEMPLATE}"
+if [[ $# -gt 0 ]]; then
+  echo "init-scaffold now uses a single canonical WBS definition: ${WBS_FILE}"
+  echo "Remove template arguments and rerun."
   exit 1
 fi
 
-if [[ "${WBS_TEMPLATE}" != "${WBS_FILE}" ]]; then
-  echo "Installing scaffold definition into ${WBS_FILE}..."
-  cp "${WBS_TEMPLATE}" "${WBS_FILE}"
-else
-  echo "Using resident scaffold definition: ${WBS_FILE}"
+if [[ ! -f "${WBS_FILE}" ]]; then
+  echo "Missing canonical WBS definition: ${WBS_FILE}"
+  exit 1
 fi
+
+echo "Using canonical scaffold definition: ${WBS_FILE}"
 
 echo "Validating scaffold definition before init..."
 python3 .governance/wbs_cli.py validate

@@ -68,7 +68,7 @@ async function run() {
     const auth = await startAuthMockServer();
     authServer = auth.server;
     appServer = startAppServer(auth.baseUrl);
-    await waitForServer(`${BASE_URL}/dashboard`);
+    await waitForServer(`${BASE_URL}/`);
 
     const itemRes = await fetch(`${BASE_URL}/api/items`, {
       method: "POST",

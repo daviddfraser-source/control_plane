@@ -32,6 +32,9 @@ out.txt
 .next/
 **/.next/
 
+# Local packaging/export artifact snapshots
+/substrate/
+
 # WBS state file - generated at runtime, not committed
 # The definition (wbs.json) IS committed
 .governance/wbs-state.json

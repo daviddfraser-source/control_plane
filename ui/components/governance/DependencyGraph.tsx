@@ -32,9 +32,6 @@ export function DependencyGraph({ nodes, edges, highlightCriticalPath }: Depende
     // Clear previous content
     svg.innerHTML = "";
 
-    // Create a simple force-directed graph layout
-    const nodeMap = new Map(nodes.map(n => [n.id, n]));
-
     // Calculate positions using a simple circular layout
     const radius = Math.min(width, height) * 0.35;
     const centerX = width / 2;

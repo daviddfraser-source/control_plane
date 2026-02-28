@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceView } from "@/components/governance/WorkspaceView";
-import { StatusBadge } from "@/components/governance/StatusBadge";
 import { fetchStatus, type StatusResponse, type StatusPacket } from "@/lib/governance/api-client";
 
 export default function PacketsPage() {

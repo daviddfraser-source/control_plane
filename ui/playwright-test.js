@@ -21,12 +21,12 @@ async function testPages() {
 
   const routes = [
     '/',
-    '/dashboard',
-    '/packets',
-    '/audit',
-    '/risks',
-    '/graph',
-    '/settings'
+    '/dev/wbs',
+    '/dev/packets',
+    '/dev/audit',
+    '/dev/risks',
+    '/dev/graph',
+    '/dev/settings'
   ];
 
   for (const route of routes) {

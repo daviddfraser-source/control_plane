@@ -19,15 +19,9 @@ export default function AppHome() {
                         <p className="text-xs text-token-secondary">Add your pages to <code className="font-mono text-token-primary">app/(app)/</code> and register them in the App layout nav.</p>
                     </div>
                     <div className="p-4 rounded-xl border border-token-default bg-token-surface">
-                        <p className="text-sm font-semibold text-token-primary mb-1">🗂️ Example page included</p>
+                        <p className="text-sm font-semibold text-token-primary mb-1">🧭 Control plane access</p>
                         <p className="text-xs text-token-secondary">
-                            <a href="/dashboard" className="text-token-primary underline underline-offset-2">Dashboard</a> provides an operations snapshot for this UX starter.
-                        </p>
-                    </div>
-                    <div className="p-4 rounded-xl border border-token-default bg-token-surface">
-                        <p className="text-sm font-semibold text-token-primary mb-1">🧩 Reuse UI patterns</p>
-                        <p className="text-xs text-token-secondary">
-                            Explore the <a href="/marketplace" className="text-token-primary underline underline-offset-2">Marketplace</a> to reuse prebuilt pages and components.
+                            Open the <a href="/dev/wbs" className="text-token-primary underline underline-offset-2">Control Plane</a> to manage packets, dependencies, and execution state.
                         </p>
                     </div>
                 </div>

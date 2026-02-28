@@ -29,12 +29,11 @@ The approach is intentionally simple and inspectable:
 
 ## Get Started
 
-Primary product UX is the Next.js app in `templates/ai-substrate`.
+Primary product UX is the Next.js app in `ui`.
 
 ```bash
-cd templates/ai-substrate
+cd ui
 npm install
-npx prisma generate
 npm run dev -- --port 3001
 ```
 
@@ -46,8 +45,8 @@ Control-plane dashboard (`python3 start.py --dashboard`) is still available for 
 ### New Project Initialization (3 Steps)
 
 ```bash
-# 1) Bootstrap a clean scaffold (minimal profile recommended)
-scripts/init-scaffold.sh templates/wbs-codex-minimal.json
+# 1) Bootstrap from the canonical WBS definition
+scripts/init-scaffold.sh
 
 # 2) Confirm first ready packet
 python3 .governance/wbs_cli.py ready
@@ -61,13 +60,8 @@ python3 .governance/wbs_cli.py note <PACKET_ID> <agent> "Evidence: <paths>"
 Re-initialize quickly during setup:
 
 ```bash
-scripts/reset-scaffold.sh templates/wbs-codex-minimal.json
+scripts/reset-scaffold.sh
 ```
-
-`init-scaffold.sh` installs the selected template into resident `.governance/wbs.json` before initialization.
-
-> [!NOTE]
-> This is a **Template Repository**. The intended workflow is to **Clone and Own**: once you instantiate this template, you own the entire codebase, including the governance tools in `src/governed_platform`. You are free to modify them, but be aware that deviating from the core logic may affect future updates or standard tooling compatibility.
 
 
 ## How It Works
@@ -102,7 +96,7 @@ Locking and write safety:
 
 ### Project Structure (Where to put your code)
 
-This template separates **governance tooling** from **user code**:
+This repository separates **governance tooling** from **user code**:
 
 - `src/governed_platform/`: Contains the core Substrate logic (CLI, Server, State Machine). **Do not modify** unless you are upgrading the governance system itself.
 - `src/app/`: **[YOUR CODE HERE]**. This is where your application logic, business rules, and agent implementations should reside.
@@ -159,7 +153,7 @@ python3 .governance/wbs_cli.py claim <PACKET_ID> codex-lead
 ### Human Operators
 
 ```bash
-cd templates/ai-substrate
+cd ui
 npm run dev -- --port 3001
 ```
 
@@ -184,24 +178,19 @@ python3 .governance/wbs_cli.py <command>
 | [`skills/skill-authoring`](skills/skill-authoring) | Scaffold and lint custom skill packages |
 | [`skills/mcp-catalog-curation`](skills/mcp-catalog-curation) | Evaluate and curate MCP/tool catalog entries |
 
-## Templates
+## WBS Definition
 
-| Template | Use Case |
+Single canonical definition:
+
+| File | Use Case |
 |---|---|
-| `.governance/wbs.json` | Default clean baseline scaffold for clone-and-own projects |
-| `templates/wbs-codex-minimal.json` | Fast Codex scaffold bootstrap |
-| `templates/wbs-codex-full.json` | Full scaffold/governance setup |
-| `templates/wbs-codex-refactor.json` | Legacy migration profile compatibility |
+| `.governance/wbs.json` | Active WBS definition used by scaffold/init and governance CLI |
 
 ```bash
 scripts/init-scaffold.sh
-# or explicitly:
-scripts/init-scaffold.sh templates/wbs-codex-minimal.json
 scripts/reset-scaffold.sh
-python3 .governance/wbs_cli.py template-validate
+python3 .governance/wbs_cli.py validate
 ```
-
-See `docs/template-usage.md` for scaffold onboarding flow.
 
 Internal Substrate upgrade roadmap packets are archived in:
 `docs/codex-migration/packets/substrate-internal-upgrade-roadmap-wbs-2026-02-17.json`.
@@ -210,7 +199,6 @@ Internal Substrate upgrade roadmap packets are archived in:
 
 Scaffold artifacts (safe to ship/commit):
 - `.governance/wbs.json` (baseline packet definition)
-- `templates/*.json` (profile definitions)
 - `scripts/init-scaffold.sh`, `scripts/reset-scaffold.sh`, `scripts/scaffold-check.sh`
 - `docs/*`, `prompts/*`, `skills/*`, `src/*`
 
@@ -221,7 +209,18 @@ Runtime artifacts (generated during execution; do not ship):
 
 Publishing hygiene:
 - Remove `.meta/` before publishing downstream template forks or release bundles.
-- Run `python3 .governance/wbs_cli.py template-validate` before release.
+- Remove generated local artifact snapshots with `scripts/clean-local-artifacts.sh`.
+- Preview removable release artifacts with `scripts/clean-release-artifacts.sh` (dry-run).
+- Remove removable release artifacts with `scripts/clean-release-artifacts.sh --apply`.
+- Run `python3 .governance/wbs_cli.py validate` before release.
+
+## Shipping Policy
+
+Use source-only shipping for this clone-and-own repository. Do not ship installed dependencies or generated build artifacts.
+
+- Policy document: `docs/shipping/source-only-shipping-contract.md`
+- Release bundles must be produced from git history (commit/tag), not workspace snapshots.
+- Packaging command: `scripts/package-source-release.sh [<git-ref>] [<output-dir>]`
 
 ## Troubleshooting
 

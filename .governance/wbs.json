@@ -17,6 +17,16 @@
       "id": "72-0",
       "title": "Governance Integration",
       "description": "Integrate the governance CLI and state reporting into the new Next.js UI."
+    },
+    {
+      "id": "73-0",
+      "title": "Repo Simplification",
+      "description": "Remove template marketplace/substrate bloat and restore a lightweight control plane + app placeholder baseline."
+    },
+    {
+      "id": "74-0",
+      "title": "Shipping Hygiene",
+      "description": "Enforce source-only shipping so installable/generated artifacts are never included in clone-and-own releases."
     }
   ],
   "packets": [
@@ -33,9 +43,131 @@
       "area_id": "71-0",
       "title": "Validate Delivery Path",
       "scope": "Verify build, lint, and typecheck commands for the new UI structure. Output: Successful 'npm run build' in /ui."
+    },
+    {
+      "id": "RF-731",
+      "wbs_ref": "3.1",
+      "area_id": "73-0",
+      "title": "Baseline and scope freeze",
+      "scope": "Capture current control-plane behavior, route map, and dependency usage before refactor. Output: written baseline notes and file inventory for safe deletion boundaries."
+    },
+    {
+      "id": "RF-732",
+      "wbs_ref": "3.2",
+      "area_id": "73-0",
+      "title": "Remove marketplace surface",
+      "scope": "Delete ui/app/marketplace routes and layout, remove marketplace navigation entry points, and ensure no control-plane path references marketplace routes."
+    },
+    {
+      "id": "RF-733",
+      "wbs_ref": "3.3",
+      "area_id": "73-0",
+      "title": "Reduce app UX to placeholder",
+      "scope": "Keep only the App placeholder experience and required shell layout; remove starter app pages not required for control-plane operation."
+    },
+    {
+      "id": "RF-734",
+      "wbs_ref": "3.4",
+      "area_id": "73-0",
+      "title": "Converge to single WBS JSON",
+      "scope": "Retain .governance/wbs.json as canonical definition and remove/archive extra tracked WBS variants, updating docs/scripts to reflect single-definition policy."
+    },
+    {
+      "id": "RF-735",
+      "wbs_ref": "3.5",
+      "area_id": "73-0",
+      "title": "Remove substrate duplication artifacts",
+      "scope": "Eliminate generated substrate/dist recursive snapshot outputs from workspace and add guardrails (.gitignore/docs/script) to prevent reintroduction."
+    },
+    {
+      "id": "RF-736",
+      "wbs_ref": "3.6",
+      "area_id": "73-0",
+      "title": "Prune UI dependencies and validate",
+      "scope": "Remove unused UI dependencies introduced by marketplace/template code and validate lint/typecheck/build plus governance validation commands."
+    },
+    {
+      "id": "SHIP-741",
+      "wbs_ref": "4.1",
+      "area_id": "74-0",
+      "title": "Define source-only shipping contract",
+      "scope": "Document a canonical shipping policy: ship from git source only, never from working directory snapshots, and explicitly list allowed vs forbidden artifacts for clone-and-own release bundles."
+    },
+    {
+      "id": "SHIP-742",
+      "wbs_ref": "4.2",
+      "area_id": "74-0",
+      "title": "Implement shipping gate script",
+      "scope": "Create scripts/shipping-check.sh to fail when forbidden artifacts are present or tracked (node_modules, .next, dist, substrate snapshots, other generated payloads) and emit actionable remediation steps."
+    },
+    {
+      "id": "SHIP-743",
+      "wbs_ref": "4.3",
+      "area_id": "74-0",
+      "title": "Wire shipping checks into CI",
+      "scope": "Add CI workflow step(s) that run shipping-check and block merges/releases on violation; ensure failure output is concise and policy-aligned."
+    },
+    {
+      "id": "SHIP-744",
+      "wbs_ref": "4.4",
+      "area_id": "74-0",
+      "title": "Add release-safe cleanup tooling",
+      "scope": "Provide an explicit pre-release cleanup command/script that removes local generated/install artifacts without touching tracked source, and document safe usage."
+    },
+    {
+      "id": "SHIP-745",
+      "wbs_ref": "4.5",
+      "area_id": "74-0",
+      "title": "Add release packaging path",
+      "scope": "Define and document release packaging via git archive (or equivalent source-only packaging path) to guarantee untracked artifacts are excluded from shipped bundles."
+    },
+    {
+      "id": "SHIP-746",
+      "wbs_ref": "4.6",
+      "area_id": "74-0",
+      "title": "Validate shipping hygiene end-to-end",
+      "scope": "Run shipping checks plus build/lint/typecheck on a clean workspace and produce evidence showing release bundles exclude installable/generated libraries while retaining reproducible setup via lockfiles."
     }
   ],
   "dependencies": {
-    "UX-702": ["UX-701"]
+    "UX-702": [
+      "UX-701"
+    ],
+    "RF-732": [
+      "RF-731"
+    ],
+    "RF-733": [
+      "RF-732"
+    ],
+    "RF-734": [
+      "RF-731"
+    ],
+    "RF-735": [
+      "RF-731"
+    ],
+    "RF-736": [
+      "RF-732",
+      "RF-733",
+      "RF-734",
+      "RF-735"
+    ],
+    "SHIP-742": [
+      "SHIP-741"
+    ],
+    "SHIP-743": [
+      "SHIP-742"
+    ],
+    "SHIP-744": [
+      "SHIP-741"
+    ],
+    "SHIP-745": [
+      "SHIP-741"
+    ],
+    "SHIP-746": [
+      "SHIP-742",
+      "SHIP-743",
+      "SHIP-744",
+      "SHIP-745"
+    ]
   }
 }

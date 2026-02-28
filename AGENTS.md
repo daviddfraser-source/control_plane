@@ -13,7 +13,7 @@ Use this file as executable governance, not background documentation.
 
 ## How To Use This File
 - New project initialization (day-0):
-  - run `scripts/init-scaffold.sh templates/wbs-codex-minimal.json`
+  - run `scripts/init-scaffold.sh`
   - verify `python3 .governance/wbs_cli.py ready` returns the expected first packet
   - begin lifecycle with `claim` -> `done --risk none` -> `note`
 - At session start:

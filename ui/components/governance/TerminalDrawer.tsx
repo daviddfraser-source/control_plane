@@ -6,10 +6,9 @@ interface TerminalDrawerProps {
   open: boolean;
   onClose: () => void;
   onExecute: (command: string) => Promise<string>;
-  suggestions?: string[];
 }
 
-export function TerminalDrawer({ open, onClose, onExecute, suggestions = [] }: TerminalDrawerProps) {
+export function TerminalDrawer({ open, onClose, onExecute }: TerminalDrawerProps) {
   const [output, setOutput] = useState<string[]>(["$ terminal ready"]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);

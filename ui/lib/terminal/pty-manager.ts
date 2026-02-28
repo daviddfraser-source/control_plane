@@ -45,7 +45,6 @@ let ptySpawn:
   | undefined;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __ptySessions: Map<string, PtySession> | undefined;
 }
 

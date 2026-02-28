@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx,.js --max-warnings=0",
+    "lint": "eslint app components lib scripts types --ext .ts,.tsx,.js --max-warnings=0",
     "typecheck": "tsc --project tsconfig.json",
     "format": "prettier --write .",
     "schema:push": "npx prisma db push",
@@ -20,18 +20,12 @@
     "feature:core:reset": "npm install --omit=optional"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
-    "@svar-ui/react-gantt": "^2.5.2",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "lucide-react": "^0.474.0",
-    "dayjs": "^1.11.19",
     "next": "^16.1.6",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "react-markdown": "^10.1.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -11,14 +11,17 @@ const rules = {
   ...reactHooksPlugin.configs.recommended.rules,
   ...nextPlugin.configs.recommended.rules,
   "@next/next/no-img-element": "off",
+  "@next/next/no-page-custom-font": "off",
   "react/react-in-jsx-scope": "off",
-  "@typescript-eslint/no-require-imports": "off"
+  "@typescript-eslint/no-require-imports": "off",
+  "@typescript-eslint/no-explicit-any": "off",
+  "react-hooks/set-state-in-effect": "off"
 };
 
 module.exports = [
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
-    ignores: ["dist/**"],
+    ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

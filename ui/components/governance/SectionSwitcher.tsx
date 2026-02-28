@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Terminal, Blocks, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Terminal, type LucideIcon } from "lucide-react";
 
-export type Section = "app" | "dev" | "marketplace";
+export type Section = "app" | "dev";
 
 const sections: { id: Section; label: string; href: string; icon: LucideIcon }[] = [
     { id: "app", label: "App", href: "/", icon: LayoutDashboard },
     { id: "dev", label: "Control Plane", href: "/dev/wbs", icon: Terminal },
-    { id: "marketplace", label: "Marketplace", href: "/marketplace", icon: Blocks },
 ];
 const devControlPlaneEnabled =
     process.env.NODE_ENV !== "production" ||
@@ -17,7 +16,6 @@ const devControlPlaneEnabled =
 
 function getActiveSection(pathname: string): Section {
     if (pathname.startsWith("/dev")) return "dev";
-    if (pathname.startsWith("/marketplace")) return "marketplace";
     return "app";
 }
 

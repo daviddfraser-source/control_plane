@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, type LucideIcon } from "lucide-react";
+import { Home, type LucideIcon } from "lucide-react";
 import { SectionSwitcher } from "@/components/governance/SectionSwitcher";
 import { ThemeToggle } from "@/components/governance/ThemeToggle";
 import { CommandPalette } from "@/components/governance/CommandPalette";
@@ -11,8 +11,7 @@ import { CommandPalette } from "@/components/governance/CommandPalette";
 interface NavItem { href: string; label: string; icon: LucideIcon }
 
 const appNav: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    // Add your app pages here
+    { href: "/", label: "Home", icon: Home },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {

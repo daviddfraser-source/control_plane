@@ -4,10 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-WBS_SOURCE="${1:-.governance/wbs.json}"
+WBS_SOURCE=".governance/wbs.json"
 STATE_FILE=".governance/wbs-state.json"
 LEGACY_LOG_FILE=".governance/activity-log.jsonl"
 RISK_REGISTER_FILE=".governance/residual-risk-register.json"
+
+if [[ $# -gt 0 ]]; then
+  echo "reset-scaffold now uses a single canonical WBS definition: ${WBS_SOURCE}"
+  echo "Remove template arguments and rerun."
+  exit 1
+fi
 
 if [[ ! -f "${WBS_SOURCE}" ]]; then
   echo "Missing WBS source: ${WBS_SOURCE}"
