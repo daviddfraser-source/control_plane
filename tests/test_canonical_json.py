@@ -31,7 +31,18 @@ class CanonicalJsonTests(unittest.TestCase):
         with self.assertRaises(CanonicalJsonError):
             canonical_json_dumps({"v": math.nan})
 
+    def test_snapshot_stability_across_runs(self) -> None:
+        payload = {
+            "meta": {"b": 2, "a": 1},
+            "items": [{"z": 9, "x": 1}, {"z": 8, "x": 2}],
+            "flag": True,
+        }
+        first = canonical_json_dumps(payload)
+        second = canonical_json_dumps(payload)
+        expected = '{"flag":true,"items":[{"x":1,"z":9},{"x":2,"z":8}],"meta":{"a":1,"b":2}}'
+        self.assertEqual(first, second)
+        self.assertEqual(first, expected)
+
 
 if __name__ == "__main__":
     unittest.main()
-

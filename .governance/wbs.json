@@ -42,6 +42,11 @@
       "id": "77-0",
       "title": "PRD v2 DCL + Multi-User Implementation",
       "description": "Implement PRD-SUB-2026-002 v2 delta with corrected scope/claims: DCL foundation, compatibility clarifications, canonicalization conformance, file-mode transactional safety, drift maturity separation, and RBAC-first multi-user architecture."
+    },
+    {
+      "id": "78-0",
+      "title": "Integrity Hardening and Positioning",
+      "description": "Harden startup integrity, verification rigor, guarantees documentation, and freemium boundary to production-grade defensibility."
     }
   ],
   "packets": [
@@ -485,6 +490,48 @@
       "area_id": "77-0",
       "title": "License migration to AGPL-3.0",
       "scope": "Replace MIT licensing with AGPL-3.0 across LICENSE and repository governance/docs references; ensure badges and policy text align with copyleft distribution obligations."
+    },
+    {
+      "id": "GOV-800",
+      "wbs_ref": "8.1",
+      "area_id": "78-0",
+      "title": "Positioning and guarantee boundary rewrite",
+      "scope": "Update README and governance docs to remove ambiguous determinism language, add explicit system guarantees/non-guarantees, define open-source ledger vs paid deterministic runtime boundary, and fix command/doc drift."
+    },
+    {
+      "id": "GOV-801",
+      "wbs_ref": "8.2",
+      "area_id": "78-0",
+      "title": "Doctor/startup integrity command",
+      "scope": "Implement doctor command with fast/full modes that validates DCL config lock, canonicalization/hash/schema versions, commit continuity, and emits machine-readable integrity report."
+    },
+    {
+      "id": "GOV-802",
+      "wbs_ref": "8.3",
+      "area_id": "78-0",
+      "title": "DCL verifier hardening",
+      "scope": "Extend DCL verification to detect runtime state divergence against HEAD/post_state_hash, duplicate/invalid sequence continuity, and implement journal recovery checks documented in spec."
+    },
+    {
+      "id": "GOV-803",
+      "wbs_ref": "8.4",
+      "area_id": "78-0",
+      "title": "Adversarial integrity test suite",
+      "scope": "Add adversarial tests for commit tamper/delete/reorder, state tamper mismatch, canonicalization stability snapshots, and concurrency/sequence safety expectations."
+    },
+    {
+      "id": "GOV-804",
+      "wbs_ref": "8.5",
+      "area_id": "78-0",
+      "title": "API startup integrity enforcement",
+      "scope": "Harden API server boot path to run integrity checks before serving requests (configurable strict/fail-open modes) and expose integrity metadata endpoint for operations."
+    },
+    {
+      "id": "GOV-805",
+      "wbs_ref": "8.6",
+      "area_id": "78-0",
+      "title": "Spec and architecture documentation hardening",
+      "scope": "Publish concrete specification docs and diagrams for DCL, startup verification flow, lifecycle transitions, and data model with strict claim language aligned to implemented behavior."
     }
   ],
   "dependencies": {
@@ -685,6 +732,21 @@
     ],
     "GOV-799": [
       "GOV-798"
+    ],
+    "GOV-801": [
+      "GOV-800"
+    ],
+    "GOV-802": [
+      "GOV-801"
+    ],
+    "GOV-803": [
+      "GOV-802"
+    ],
+    "GOV-804": [
+      "GOV-802"
+    ],
+    "GOV-805": [
+      "GOV-804"
     ]
   }
 }

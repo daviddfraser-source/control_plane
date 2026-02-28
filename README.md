@@ -13,7 +13,7 @@ Constitutional governance baseline: `constitution.md`.
 
 ## Why This Exists
 
-Teams using agentic workflows need deterministic coordination mechanics when multiple actors touch the same work graph.
+Teams using agentic workflows need a deterministic packet lifecycle and verifiable governance boundary when multiple actors touch the same work graph.
 
 This project provides a technical control plane for common failure modes:
 - work drift between planned and delivered outcomes
@@ -50,8 +50,37 @@ npm run dev -- --port 3001
 
 Open `http://localhost:3001`.
 
-Control-plane dashboard (`python3 start.py --dashboard`) is still available for governance operations, but it is not the primary app UX.
+Control-plane dashboard (`python3 .governance/wbs_server.py 8090`) is still available for governance operations, but it is not the primary app UX.
 `/dev/*` routes are enabled by default in local development and feature-gated in production (`ENABLE_DEV_CONTROL_PLANE=1` or `NEXT_PUBLIC_ENABLE_DEV_CONTROL_PLANE=1`).
+
+## System Guarantees
+
+- deterministic packet lifecycle state machine enforcement
+- canonical JSON serialization for DCL hashing
+- SHA-256 cryptographic commitment for state-changing governance operations
+- tamper-evident per-packet commit chaining
+- replay verification of governance history via `verify` commands
+
+## System Non-Guarantees
+
+- deterministic LLM output
+- deterministic external API responses
+- distributed consensus
+- byzantine fault tolerance
+- deterministic execution equivalence of arbitrary runtime side effects
+
+## Freemium Boundary
+
+Open-source repository (this repo):
+- governance and integrity layer
+- packet lifecycle/state machine
+- canonical serialization and DCL commit chain
+- CLI and UI governance operations
+
+Paid deterministic runtime layer (not included in this repo):
+- deterministic execution sandbox and IO boundary control
+- replay equivalence enforcement for runtime side effects
+- advanced concurrency scheduling and isolation controls
 
 ### New Project Initialization (3 Steps)
 
@@ -128,6 +157,7 @@ python3 .governance/wbs_cli.py review-claim IMP-001 codex-review
 python3 .governance/wbs_cli.py review-submit IMP-001 codex-review --verdict APPROVE --assessment docs/governance/examples/review.json
 python3 .governance/wbs_cli.py note IMP-001 codex-lead "Evidence: docs/path.md"
 python3 .governance/wbs_cli.py risk-list --status open
+python3 .governance/wbs_cli.py doctor --full
 python3 .governance/wbs_cli.py status
 ```
 
@@ -242,7 +272,7 @@ Use source-only shipping for this clone-and-own repository. Do not ship installe
 
 - `Packet viewer API unavailable (HTTP 404)`
   - This affects control-plane routes only.
-  - Start control-plane server with `python3 start.py --dashboard --port 8090` or `python3 .governance/wbs_server.py 8090`.
+  - Start control-plane server with `python3 .governance/wbs_server.py 8090`.
 
 - `Failed to execute 'json' on 'Response'` / `Unexpected end of JSON input`
   - This affects control-plane API routes (WBS server), not the primary product app routes.
@@ -266,6 +296,8 @@ Ontology guidance is in `docs/ontology.md` and `docs/ontology.json`.
 PRD v2 delta scope is in `docs/governance/prd-sub-2026-002-v2-delta-contract.md`.
 DCL details are in `docs/governance/dcl-spec-v1.md`.
 Multi-user foundation details are in `docs/governance/multi-user-architecture-v1.md`.
+System specification is in `SPEC.md`.
+Verification/startup integrity diagrams are in `docs/governance/verification-architecture.md`.
 
 Ontology enforcement depth (current):
 - deterministic token and phrase checks only (no NLP semantic inference)

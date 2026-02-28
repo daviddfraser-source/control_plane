@@ -37,9 +37,16 @@
 
 ## Integrity Verification
 
+- Startup integrity/config check:
+  - `python3 .governance/wbs_cli.py doctor --fast`
+  - `python3 .governance/wbs_cli.py doctor --full`
 - Verify all DCL chains:
   - `python3 .governance/wbs_cli.py verify --all`
 - Inspect packet commit history:
   - `python3 .governance/wbs_cli.py history <packet_id>`
 - Export proof bundle:
   - `python3 .governance/wbs_cli.py export-proof <packet_id> --out proof.zip`
+- Create project checkpoint:
+  - `python3 .governance/wbs_cli.py checkpoint --phase "Phase X"`
+- API startup integrity gate:
+  - `PYTHONPATH=src python3 -m governed_platform.api.server --integrity-mode fast --integrity-strict`

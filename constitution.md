@@ -622,6 +622,23 @@ Legend:
 
 ---
 
+## Appendix B: Guarantees Boundary
+
+This system guarantees deterministic governance-state commitment, not deterministic model/runtime execution.
+
+Guaranteed:
+- deterministic packet lifecycle state machine enforcement
+- canonical serialization + SHA-256 state-transition commitment
+- tamper-evident commit chaining and replay verification
+
+Not guaranteed:
+- deterministic LLM outputs
+- deterministic third-party API behavior
+- distributed consensus/byzantine fault tolerance
+- deterministic equivalence of arbitrary side effects
+
+---
+
 ## Amendment Log
 
 **Version 1.0** - Initial constitution adopted [Date]

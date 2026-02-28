@@ -1,5 +1,17 @@
 # Multi-User Architecture v1 Foundation
 
+## Freemium Boundary
+
+Open-source tier (this repository):
+- governance engine and packet lifecycle controls
+- deterministic commitment layer and verification commands
+- CLI + local UI + optional local API server
+
+Paid deterministic runtime tier (outside this repository):
+- deterministic execution sandbox and IO boundary control
+- replay equivalence runtime enforcement
+- advanced scheduler/isolation controls for high-concurrency workloads
+
 ## Layers
 
 1. API boundary (`src/governed_platform/api/server.py`)

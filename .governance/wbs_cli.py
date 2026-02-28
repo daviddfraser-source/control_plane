@@ -53,10 +53,15 @@ from governed_platform.governance.log_integrity import (
     verify_log_integrity,
 )
 from governed_platform.governance.dcl import (
+    DCL_DEFAULT_CONFIG,
     export_proof_bundle,
     history as dcl_history,
     verify_all as dcl_verify_all,
+    verify_all_detailed as dcl_verify_all_detailed,
     verify_packet as dcl_verify_packet,
+    verify_packet_detailed as dcl_verify_packet_detailed,
+    validate_config_lock as dcl_validate_config_lock,
+    recover_all_journals as dcl_recover_all_journals,
     write_commit as dcl_write_commit,
     write_project_checkpoint as dcl_write_project_checkpoint,
 )
@@ -835,11 +840,7 @@ def _annotate_git_tag(packet_id: str, *, tag_name: str = "", error: str = "") ->
 
 
 def _load_dcl_config() -> dict:
-    default = {
-        "enabled": True,
-        "heartbeat_commit_policy": "transition_only",
-        "mode": "dcl",
-    }
+    default = dict(DCL_DEFAULT_CONFIG)
     if not DCL_CONFIG_PATH.exists():
         DCL_CONFIG_PATH.write_text(json.dumps(default, indent=2) + "\n")
         return default
@@ -2254,9 +2255,17 @@ def cmd_verify_log() -> bool:
 
 
 def cmd_verify(packet_id: str = "", verify_all_packets: bool = False) -> bool:
+    dcl_recover_all_journals(GOV.parent)
     if verify_all_packets:
-        ok, issues = dcl_verify_all(GOV.parent)
-        payload = {"ok": ok, "issues": issues}
+        state = ensure_state_shape(load_state())
+        state_packets = state.get("packets", {})
+        ok, details = dcl_verify_all_detailed(GOV.parent, state_packets=state_packets)
+        issues = {
+            pid: list(payload.get("issues", []))
+            for pid, payload in details.items()
+            if payload.get("issues")
+        }
+        payload = {"ok": ok, "issues": issues, "details": details}
         if output_json(payload):
             return ok
         if ok:
@@ -2271,8 +2280,12 @@ def cmd_verify(packet_id: str = "", verify_all_packets: bool = False) -> bool:
     if not packet_id:
         print(red("verify requires <packet_id> or --all"))
         return False
-    ok, errs = dcl_verify_packet(GOV.parent, packet_id)
-    payload = {"ok": ok, "packet_id": packet_id, "issues": errs}
+    state = ensure_state_shape(load_state())
+    packet_state = dict(state.get("packets", {}).get(packet_id, {}) or {})
+    detail = dcl_verify_packet_detailed(GOV.parent, packet_id, state_packet=packet_state)
+    ok = len(detail.get("issues", [])) == 0
+    errs = list(detail.get("issues", []))
+    payload = {"ok": ok, "packet_id": packet_id, "issues": errs, "detail": detail}
     if output_json(payload):
         return ok
     if ok:
@@ -2330,6 +2343,87 @@ def cmd_checkpoint(phase: str) -> bool:
         return True
     print(green(f"Checkpoint created: {payload.get('checkpoint_id')} root={payload.get('merkle_root')[:16]}"))
     return True
+
+
+def cmd_doctor(mode: str = "fast") -> bool:
+    state = ensure_state_shape(load_state())
+    dcl_cfg = _load_dcl_config()
+    schema_version = str(state.get("schema_version", "") or "")
+    config_issues = dcl_validate_config_lock(dcl_cfg, expected_state_schema=schema_version)
+    journal_reports = dcl_recover_all_journals(GOV.parent)
+    journal_issues = [row for row in journal_reports if row.get("status") == "blocked"]
+
+    state_packets = state.get("packets", {})
+    if mode == "full":
+        ok, details = dcl_verify_all_detailed(GOV.parent, state_packets=state_packets)
+    else:
+        details = {}
+        ok = True
+        for packet_id, packet_state in sorted(state_packets.items()):
+            if not dcl_history(GOV.parent, packet_id):
+                continue
+            detail = dcl_verify_packet_detailed(GOV.parent, packet_id, state_packet=packet_state)
+            details[packet_id] = detail
+            if detail.get("issues"):
+                ok = False
+
+    verify_issues = {
+        packet_id: list(payload.get("issues", []))
+        for packet_id, payload in details.items()
+        if payload.get("issues")
+    }
+    commits_verified = sum(int(payload.get("checked_commits", 0) or 0) for payload in details.values())
+    report = {
+        "ok": ok and not config_issues and not journal_issues,
+        "mode": mode,
+        "packet_count": len(state_packets),
+        "packets_checked": len(details),
+        "commits_verified": commits_verified,
+        "integrity_errors": len(config_issues) + len(journal_issues) + sum(len(v) for v in verify_issues.values()),
+        "config_lock": {
+            "canonicalization_version": dcl_cfg.get("canonicalization_version"),
+            "hash_algorithm": dcl_cfg.get("hash_algorithm"),
+            "dcl_version": dcl_cfg.get("dcl_version"),
+            "state_schema_version": dcl_cfg.get("state_schema_version"),
+            "issues": config_issues,
+        },
+        "journal_recovery": {
+            "reports": journal_reports,
+            "issues": journal_issues,
+        },
+        "verification_issues": verify_issues,
+    }
+
+    if output_json(report):
+        return bool(report.get("ok"))
+
+    status_text = green("Doctor checks passed") if report["ok"] else red("Doctor checks failed")
+    print(status_text)
+    print(f"Mode: {mode}")
+    print(f"Packet count: {report['packet_count']}")
+    print(f"Packets checked: {report['packets_checked']}")
+    print(f"Commits verified: {report['commits_verified']}")
+    print(f"Integrity errors: {report['integrity_errors']}")
+    print(
+        f"Config lock: canonicalization={report['config_lock']['canonicalization_version']} "
+        f"hash={report['config_lock']['hash_algorithm']} "
+        f"dcl={report['config_lock']['dcl_version']} "
+        f"state-schema={report['config_lock']['state_schema_version']}"
+    )
+    if config_issues:
+        print(red("Config lock issues:"))
+        for issue in config_issues:
+            print(f"  - {issue}")
+    if journal_issues:
+        print(red("Journal recovery issues:"))
+        for issue in journal_issues:
+            print(f"  - {issue.get('packet_id')}: {issue.get('issue')}")
+    if verify_issues:
+        print(red("Verification issues:"))
+        for packet_id, issues in verify_issues.items():
+            for issue in issues:
+                print(f"  - {packet_id}: {issue}")
+    return bool(report.get("ok"))
 
 
 def cmd_next():
@@ -3088,6 +3182,7 @@ def print_help():
     print("  risk-summary          Aggregate residual risk counts")
     print("  log-mode <mode>       Set log integrity mode (plain|hash-chain)")
     print("  verify-log            Verify tamper-evident log chain")
+    print("  doctor [--full]       Run startup integrity/config verification report")
     print("  verify <id>|--all     Verify DCL commit chain integrity")
     print("  history <id>          Show DCL commit timeline for a packet")
     print("  export-proof <id> --out <path.zip> Export packet proof bundle")
@@ -3803,6 +3898,14 @@ def main():
                     sys.exit(1)
                 packet_id = extra[0]
             if not cmd_verify(packet_id=packet_id, verify_all_packets=verify_all_packets):
+                sys.exit(1)
+        elif cmd == "doctor":
+            extra = [arg for arg in args[1:] if arg not in ("--full", "--fast")]
+            if extra:
+                print("Usage: wbs_cli.py doctor [--full|--fast]")
+                sys.exit(1)
+            mode = "full" if "--full" in args[1:] else "fast"
+            if require_state() and not cmd_doctor(mode=mode):
                 sys.exit(1)
         elif cmd == "history":
             if len(args) < 2:
