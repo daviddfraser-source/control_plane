@@ -15,6 +15,7 @@
 - During long-running execution:
   - `python3 .governance/wbs_cli.py heartbeat <packet_id> <agent> --status "..."`
   - `python3 .governance/wbs_cli.py check-stalled`
+  - Defaults: heartbeat interval `900s`, stall threshold `1800s`, preflight timeout `3600s`
 - Completion path:
   - `python3 .governance/wbs_cli.py done <packet_id> <agent> "evidence" --risk none`
   - If packet moves to review: `review-claim` then `review-submit`.
@@ -23,6 +24,7 @@
 
 - Validate packet output against ontology:
   - `python3 .governance/wbs_cli.py ontology validate <packet_id>`
+  - Validation mode is deterministic token/phrase checks and invariant hooks (no NLP inference).
 - Submit ontology extensions:
   - `python3 .governance/wbs_cli.py ontology propose --actor <agent> --payload <json>`
 

@@ -27,6 +27,11 @@ The approach is intentionally simple and inspectable:
 - append-only activity log entries on lifecycle events
 - atomic writes and lock-aware update flows
 
+Operational defaults:
+- heartbeat interval default: `900s` (15 minutes)
+- stall threshold default: `2x` heartbeat interval (`1800s`)
+- preflight timeout default: `3600s` (returns packet to `pending`)
+
 ## Get Started
 
 Primary product UX is the Next.js app in `ui`.
@@ -252,6 +257,11 @@ Use source-only shipping for this clone-and-own repository. Do not ship installe
 Governance enhancement design is in `docs/governance/prd-sub-2026-002-execution-contract.md`.
 State/event contract is in `docs/governance/state-machine-v2.md` and `.governance/event-schema.v2.json`.
 Ontology guidance is in `docs/ontology.md` and `docs/ontology.json`.
+
+Ontology enforcement depth (current):
+- deterministic token and phrase checks only (no NLP semantic inference)
+- checks include entity token presence, anti-alias usage, anti-conflation pairs, relationship direction/inversion phrases, and invariant assertion hooks
+- drift check mode is heuristic (`token-consistency-heuristic` + notes coverage), not full semantic drift inference
 
 ## Testing
 

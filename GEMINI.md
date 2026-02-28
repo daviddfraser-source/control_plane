@@ -30,7 +30,7 @@ python3 .governance/wbs_cli.py ready
 
 3. Claim a packet:
 ```bash
-python3 .governance/wbs_cli.py claim <PACKET_ID> gemini
+python3 .governance/wbs_cli.py claim <PACKET_ID> gemini --context-attestation '["constitution.md","AGENTS.md"]'
 ```
 
 4. Inspect packet context bundle:
@@ -48,6 +48,20 @@ python3 .governance/wbs_cli.py status
 python3 .governance/wbs_cli.py done <PACKET_ID> gemini "Created X, validated Y, evidence in Z" --risk none
 ```
 
+7. Preflight/review flows (when packet requires them):
+```bash
+python3 .governance/wbs_cli.py preflight <PACKET_ID> gemini --assessment docs/governance/examples/preflight.json
+python3 .governance/wbs_cli.py preflight-approve <PACKET_ID> supervisor
+python3 .governance/wbs_cli.py review-claim <PACKET_ID> gemini-review
+python3 .governance/wbs_cli.py review-submit <PACKET_ID> gemini-review --verdict APPROVE --assessment docs/governance/examples/review.json
+```
+
+8. Long-running packet telemetry:
+```bash
+python3 .governance/wbs_cli.py heartbeat <PACKET_ID> gemini --status "Implementing migration"
+python3 .governance/wbs_cli.py check-stalled
+```
+
 ## Packet Execution Rules
 
 Read `AGENTS.md` for the full operating contract. Key rules:
@@ -56,6 +70,8 @@ Read `AGENTS.md` for the full operating contract. Key rules:
 - no silent scope expansion
 - validation expected before completion
 - if blocked or invalid, use `fail` with explicit reason
+- for review-required packets, reviewer must be a different identity from executor
+- heartbeat defaults are 900s interval and 1800s stall threshold unless overridden
 
 ## Skills Available
 
@@ -94,9 +110,11 @@ These are wrappers around the governance CLI.
 2. user confirms packet
 3. `claim <id> gemini`
 4. execute packet scope
-5. run validation checks
-6. `done <id> gemini "evidence" --risk none`
-7. report result
+5. if preflight required: submit `preflight` and wait for `preflight-approve`
+6. run validation checks + heartbeat for long runs
+7. `done <id> gemini "evidence" --risk none`
+8. if moved to review: reviewer uses `review-claim` + `review-submit`
+9. report result
 
 ## Error Handling
 

@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "domain": "infrastructure_delivery",
+  "entities": {
+    "program": {
+      "definition": "Collection of related infrastructure projects under common outcomes",
+      "required_attributes": ["program_id", "sponsor", "portfolio", "status"],
+      "anti_conflations": ["infrastructure_project", "work_package"]
+    },
+    "infrastructure_project": {
+      "definition": "Discrete funded project delivering an infrastructure asset or capability",
+      "required_attributes": ["project_id", "sponsor", "delivery_phase", "approval_status"],
+      "anti_conflations": ["program", "work_package"]
+    },
+    "work_package": {
+      "definition": "Scoped unit of execution within a project",
+      "required_attributes": ["work_package_id", "project_id", "owner", "status"],
+      "anti_conflations": ["infrastructure_project", "deliverable"]
+    },
+    "deliverable": {
+      "definition": "Tangible output produced by a work package",
+      "required_attributes": ["deliverable_id", "work_package_id", "acceptance_status"],
+      "anti_conflations": ["milestone"]
+    },
+    "milestone": {
+      "definition": "Point-in-time governance checkpoint",
+      "required_attributes": ["milestone_id", "project_id", "gate_type", "gate_date"],
+      "anti_conflations": ["deliverable"]
+    },
+    "risk": {
+      "definition": "Potential event with delivery/compliance impact",
+      "required_attributes": ["risk_id", "owner", "likelihood", "impact", "treatment_status"],
+      "anti_conflations": ["issue"]
+    },
+    "approval": {
+      "definition": "Formal decision record",
+      "required_attributes": ["approval_id", "approver", "decision", "decision_date"],
+      "anti_conflations": ["milestone"]
+    }
+  },
+  "vocabulary": {
+    "milestone": {
+      "aliases": ["gate", "checkpoint"],
+      "anti_aliases": ["deliverable"],
+      "definition": "Point-in-time checkpoint"
+    },
+    "deliverable": {
+      "aliases": ["output"],
+      "anti_aliases": ["milestone"],
+      "definition": "Tangible output"
+    }
+  },
+  "relationships": [
+    {"from": "program", "relation": "CONTAINS", "to": "infrastructure_project", "cardinality": "1..*", "invertible": false},
+    {"from": "infrastructure_project", "relation": "CONTAINS", "to": "work_package", "cardinality": "1..*", "invertible": false},
+    {"from": "work_package", "relation": "PRODUCES", "to": "deliverable", "cardinality": "1..*", "invertible": false},
+    {"from": "infrastructure_project", "relation": "HAS", "to": "milestone", "cardinality": "1..*", "invertible": false},
+    {"from": "infrastructure_project", "relation": "HAS", "to": "risk", "cardinality": "0..*", "invertible": false},
+    {"from": "infrastructure_project", "relation": "REQUIRES", "to": "approval", "cardinality": "1..*", "invertible": false}
+  ],
+  "invariants": [
+    {"id": "INF_INV_001", "assertion": "Every deliverable traces to exactly one work_package", "severity": "error"},
+    {"id": "INF_INV_002", "assertion": "Every risk has exactly one owner", "severity": "error"},
+    {"id": "INF_INV_003", "assertion": "A project cannot be both active and closed", "severity": "error"}
+  ]
+}

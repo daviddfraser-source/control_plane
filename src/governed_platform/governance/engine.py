@@ -207,6 +207,25 @@ class GovernanceEngine(GovernanceInterface):
             return f"Template {template_ref} expects exit_criteria list"
         return ""
 
+    def _ontology_norm(self, value: Any) -> str:
+        token = str(value or "").strip().lower()
+        token = re.sub(r"[^a-z0-9_]+", "_", token)
+        token = re.sub(r"_+", "_", token).strip("_")
+        return token
+
+    def _ontology_tokens(self, *values: str) -> set:
+        out = set()
+        for value in values:
+            for raw in re.findall(r"[A-Za-z0-9_]+", str(value or "").lower()):
+                token = self._ontology_norm(raw)
+                if token:
+                    out.add(token)
+        return out
+
+    def _ontology_text(self, *values: str) -> str:
+        joined = " ".join(str(v or "") for v in values).lower()
+        return re.sub(r"\s+", " ", joined).strip()
+
     def _collect_text_values(self, value: Any, out: List[str]) -> None:
         if isinstance(value, str):
             out.append(value)
@@ -1139,7 +1158,11 @@ class GovernanceEngine(GovernanceInterface):
         state = self._load()
         packet = self._find_packet_definition(packet_id)
         pkt = state.get("packets", {}).get(packet_id, {})
-        notes = str(pkt.get("notes") or "") + "\n" + str(packet.get("scope") or "")
+        notes = str(pkt.get("notes") or "")
+        scope = str(packet.get("scope") or "")
+        source_text = f"{notes}\n{scope}"
+        tokens = self._ontology_tokens(source_text)
+        text = self._ontology_text(source_text)
         ont_md, ont_json = self._ontology_files()
         if not ont_json.exists():
             return True, {"enabled": False, "message": "ontology.json not present", "checks": []}
@@ -1150,31 +1173,116 @@ class GovernanceEngine(GovernanceInterface):
 
         checks = []
         entities = schema.get("entities", {})
-        for entity_id in entities.keys():
+        for entity_id, entity_cfg in entities.items():
+            eid = self._ontology_norm(entity_id)
             checks.append(
                 {
                     "kind": "entity_reference",
                     "target": entity_id,
                     "severity": "warning",
-                    "ok": (entity_id in notes),
+                    "ok": eid in tokens,
                     "message": f"Entity '{entity_id}' referenced",
                 }
             )
+            anti = [self._ontology_norm(item) for item in entity_cfg.get("anti_conflations", [])]
+            for anti_token in anti:
+                if not anti_token:
+                    continue
+                checks.append(
+                    {
+                        "kind": "anti_conflation",
+                        "target": f"{entity_id}:{anti_token}",
+                        "severity": "warning",
+                        "ok": not (eid in tokens and anti_token in tokens),
+                        "message": f"Avoid conflating '{entity_id}' with '{anti_token}'",
+                    }
+                )
+
+        vocabulary = schema.get("vocabulary", {})
+        for canonical, vocab_cfg in vocabulary.items():
+            for anti_alias in vocab_cfg.get("anti_aliases", []):
+                anti_token = self._ontology_norm(anti_alias)
+                if not anti_token:
+                    continue
+                checks.append(
+                    {
+                        "kind": "anti_alias",
+                        "target": f"{canonical}:{anti_alias}",
+                        "severity": "warning",
+                        "ok": anti_token not in tokens,
+                        "message": f"Anti-alias '{anti_alias}' used for canonical '{canonical}'",
+                    }
+                )
+
+        for rel in schema.get("relationships", []):
+            from_entity = self._ontology_norm(rel.get("from"))
+            to_entity = self._ontology_norm(rel.get("to"))
+            relation = self._ontology_norm(rel.get("relation"))
+            if not from_entity or not to_entity or not relation:
+                continue
+            forward_phrase = f"{from_entity} {relation} {to_entity}"
+            inverse_phrase = f"{to_entity} {relation} {from_entity}"
+            forward_present = forward_phrase in text
+            inverse_present = inverse_phrase in text
+
+            checks.append(
+                {
+                    "kind": "relationship_direction",
+                    "target": forward_phrase,
+                    "severity": "warning",
+                    "ok": (forward_present or not (from_entity in tokens and to_entity in tokens)),
+                    "message": f"Expected relationship phrase '{forward_phrase}' when both entities are present",
+                }
+            )
+            if rel.get("invertible") is False:
+                checks.append(
+                    {
+                        "kind": "relationship_inversion",
+                        "target": inverse_phrase,
+                        "severity": "error",
+                        "ok": not inverse_present,
+                        "message": f"Inversion prohibited for '{forward_phrase}'",
+                    }
+                )
+
+        assertion_hooks = pkt.get("ontology_assertions")
+        if not isinstance(assertion_hooks, dict):
+            assertion_hooks = {}
         for inv in schema.get("invariants", []):
+            inv_id = str(inv.get("id") or "")
+            inv_hook = assertion_hooks.get(inv_id)
+            inv_ok = True
+            inv_note = str(inv.get("assertion") or "")
+            if isinstance(inv_hook, bool):
+                inv_ok = bool(inv_hook)
+            elif isinstance(inv_hook, dict):
+                inv_ok = bool(inv_hook.get("ok", True))
+                inv_note = str(inv_hook.get("message") or inv_note)
             checks.append(
                 {
                     "kind": "invariant",
-                    "target": inv.get("id"),
+                    "target": inv_id,
                     "severity": str(inv.get("severity", "error")).lower(),
-                    "ok": True,
-                    "message": inv.get("assertion", ""),
+                    "ok": inv_ok,
+                    "message": inv_note,
                 }
             )
+            if inv_id and inv_id not in assertion_hooks:
+                checks.append(
+                    {
+                        "kind": "invariant_hook",
+                        "target": inv_id,
+                        "severity": "warning",
+                        "ok": True,
+                        "message": "No ontology_assertions hook supplied; invariant treated as advisory-pass",
+                    }
+                )
         return True, {"enabled": True, "ontology_path": str(ont_json), "checks": checks}
 
     def ontology_check_drift(self) -> Dict[str, Any]:
         state = self._load()
         drifts = []
+        term_usage = {}
         for pid, pkt in state.get("packets", {}).items():
             runtime = normalize_runtime_status(pkt.get("status"))
             if runtime not in ("in_progress", "review", "stalled"):
@@ -1187,9 +1295,22 @@ class GovernanceEngine(GovernanceInterface):
                         "message": "No packet notes available for semantic consistency scan",
                     }
                 )
+                continue
+            for token in self._ontology_tokens(pkt.get("notes")):
+                term_usage.setdefault(token, []).append(pid)
+        for token, packets in term_usage.items():
+            unique = sorted(set(packets))
+            if len(unique) >= 3:
+                drifts.append(
+                    {
+                        "packet_id": ",".join(unique),
+                        "severity": "info",
+                        "message": f"High-shared ontology token '{token}' across {len(unique)} active packets; review for consistency",
+                    }
+                )
         state.setdefault("ontology", {})["last_drift_scan_at"] = datetime.now().isoformat()
         self._save(state)
-        return {"drifts": drifts, "count": len(drifts)}
+        return {"drifts": drifts, "count": len(drifts), "mode": "token-consistency-heuristic"}
 
     def ontology_propose(self, actor: str, payload: Dict[str, Any]) -> Tuple[bool, str]:
         state = self._load()

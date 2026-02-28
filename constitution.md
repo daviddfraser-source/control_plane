@@ -82,6 +82,16 @@ Packets with `context_manifest` must provide attestation for all required contex
 
 **Enforcement:** `claim` rejects missing required context files; missing optional files are logged as warnings.
 
+### Section 2C: Telemetry Defaults
+Heartbeat/stall governance uses the following default control values unless overridden by packet or project config:
+- `heartbeat_interval_seconds = 900`
+- `stall_multiplier = 2` (stall threshold = `1800s`)
+- `preflight_timeout_seconds = 3600`
+
+**Rationale:** Operators must know baseline timing behavior without reading source code.
+
+**Enforcement:** Engine evaluates these values during `check-stalled` and preflight timeout transitions.
+
 ### Section 2B: Two-Person Integrity
 For review-required packets, review claims from the same identity as the executor are prohibited.
 

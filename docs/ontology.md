@@ -1,5 +1,8 @@
 # Ontology
 
+This file defines the core governance ontology for Substrate itself.
+For domain-specific projects, start from `docs/ontology-infrastructure-template.md` and `docs/ontology-templates/infrastructure_delivery_ontology.json`.
+
 ## Canonical Entities
 
 ### packet
@@ -37,3 +40,19 @@ Anti-aliases: milestone
 - Every DONE packet has exactly one execution owner.
 - A packet cannot be in both DONE and FAILED status.
 - A review-required packet cannot transition directly from IN_PROGRESS to DONE.
+
+## Validation Profile (Current Runtime)
+
+- Deterministic checks only (no NLP semantic inference).
+- Entity checks: token-boundary presence (not raw substring match).
+- Vocabulary checks: anti-alias usage detection.
+- Anti-conflation checks: canonical + prohibited pair co-occurrence warnings.
+- Relationship checks: direction/inversion phrase checks from ontology schema.
+- Invariants: evaluated via optional `ontology_assertions` hooks in packet runtime state.
+
+## Drift Check Profile (Current Runtime)
+
+- `ontology check-drift` currently runs heuristic checks:
+  - notes coverage for active packets
+  - shared-token consistency heuristics across active packets
+- This is advisory telemetry, not full semantic contradiction inference.

@@ -32,6 +32,11 @@
       "id": "75-0",
       "title": "Governance Enhancements Program",
       "description": "Implement PRD-SUB-2026-002 lifecycle + semantic governance enhancements with deterministic controls and full governance-doc synchronization."
+    },
+    {
+      "id": "76-0",
+      "title": "Governance Hardening Gaps",
+      "description": "Address post-review minor gaps: test coverage, ontology depth/clarity, drift-check semantics, documented defaults, and Gemini lifecycle parity."
     }
   ],
   "packets": [
@@ -307,6 +312,62 @@
       "area_id": "75-0",
       "title": "Program integration, rollout, and closeout report",
       "scope": "Run end-to-end integration validation across phases, capture residual risks and rollout notes, and publish final delivery report with evidence references for all PRD enhancements."
+    },
+    {
+      "id": "GOV-776",
+      "wbs_ref": "6.1",
+      "area_id": "76-0",
+      "title": "Test harness bootstrap",
+      "scope": "Create a tests/ baseline for governance engine and CLI pathways so CI discovery has concrete coverage entrypoints. Output: tests/ directory, test package scaffolding, and smoke tests wired for python3 -m unittest discover -s tests -v."
+    },
+    {
+      "id": "GOV-777",
+      "wbs_ref": "6.2",
+      "area_id": "76-0",
+      "title": "Lifecycle transition unit tests",
+      "scope": "Add focused unit tests for preflight approve/return, heartbeat stall/resume, and review approve/reject/escalate with two-person integrity enforcement and max-cycle auto-escalation."
+    },
+    {
+      "id": "GOV-778",
+      "wbs_ref": "6.3",
+      "area_id": "76-0",
+      "title": "Ontology validation depth upgrade",
+      "scope": "Replace substring-only ontology checks with deterministic token/field-aware checks for anti-aliases, anti-conflations, relationship constraints, and invariant evaluation hooks; keep deterministic behavior and backward compatibility."
+    },
+    {
+      "id": "GOV-779",
+      "wbs_ref": "6.4",
+      "area_id": "76-0",
+      "title": "Ontology and drift semantics documentation",
+      "scope": "Document current and upgraded ontology enforcement depth explicitly in README/governance docs, and align drift-check naming/description with actual implemented behavior to avoid overclaiming semantics."
+    },
+    {
+      "id": "GOV-780",
+      "wbs_ref": "6.5",
+      "area_id": "76-0",
+      "title": "Domain ontology reference template",
+      "scope": "Provide a domain-focused ontology example/template (program/project/work_package/milestone/deliverable/risk/approval) for regulated infrastructure use cases, with mapping guidance from the core governance ontology."
+    },
+    {
+      "id": "GOV-781",
+      "wbs_ref": "6.6",
+      "area_id": "76-0",
+      "title": "Heartbeat policy defaults surfaced",
+      "scope": "Surface and document heartbeat interval/stall-threshold defaults in constitution and README plus operator workflow docs; ensure defaults map exactly to engine config values."
+    },
+    {
+      "id": "GOV-782",
+      "wbs_ref": "6.7",
+      "area_id": "76-0",
+      "title": "Gemini lifecycle parity update",
+      "scope": "Update GEMINI.md guidance to mirror CLAUDE/Codex lifecycle capabilities including preflight, heartbeat, review, template, and ontology governance commands."
+    },
+    {
+      "id": "GOV-783",
+      "wbs_ref": "6.8",
+      "area_id": "76-0",
+      "title": "Gap-closure integration validation",
+      "scope": "Run end-to-end validation for the new hardening packets, capture residual risks, and publish a concise closure report covering test evidence and documentation alignment."
     }
   ],
   "dependencies": {
@@ -424,6 +485,30 @@
     "GOV-775": [
       "GOV-774",
       "GOV-753"
+    ],
+    "GOV-777": [
+      "GOV-776"
+    ],
+    "GOV-778": [
+      "GOV-776"
+    ],
+    "GOV-779": [
+      "GOV-778"
+    ],
+    "GOV-780": [
+      "GOV-779"
+    ],
+    "GOV-781": [
+      "GOV-779"
+    ],
+    "GOV-782": [
+      "GOV-779"
+    ],
+    "GOV-783": [
+      "GOV-777",
+      "GOV-780",
+      "GOV-781",
+      "GOV-782"
     ]
   }
 }
