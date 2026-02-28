@@ -57,8 +57,16 @@ All state changes must be atomic and logged. No silent state modification.
 
 ### Section 2: Valid Transition Path
 State transitions must follow the formal state machine:
-- PENDING → IN_PROGRESS (via `claim`)
-- IN_PROGRESS → DONE (via `done`)
+- PENDING → PREFLIGHT (via `claim` when preflight is required)
+- PREFLIGHT → IN_PROGRESS (via `preflight-approve`)
+- PREFLIGHT → PENDING (via `preflight-return`)
+- PENDING → IN_PROGRESS (via `claim` when preflight is not required)
+- IN_PROGRESS ↔ STALLED (automatic stall detection + heartbeat resume)
+- IN_PROGRESS → REVIEW (via `done` when review is required)
+- REVIEW → DONE (via `review-submit --verdict APPROVE`)
+- REVIEW → IN_PROGRESS (via `review-submit --verdict REJECT`)
+- REVIEW → ESCALATED (via `review-submit --verdict ESCALATE` or max review cycles)
+- IN_PROGRESS → DONE (via `done` when review is not required)
 - IN_PROGRESS → FAILED (via `fail`)
 - IN_PROGRESS → PENDING (via `reset`, human only)
 - PENDING → BLOCKED (automatic when dependency fails)
@@ -66,6 +74,20 @@ State transitions must follow the formal state machine:
 **Rationale:** Enforces workflow integrity, prevents invalid state combinations.
 
 **Enforcement:** CLI rejects invalid transitions with error messages indicating valid next states.
+
+### Section 2A: Context Attestation Gate
+Packets with `context_manifest` must provide attestation for all required context files at claim time.
+
+**Rationale:** Prevents trust-based context loading and silent execution without required constitutional/domain context.
+
+**Enforcement:** `claim` rejects missing required context files; missing optional files are logged as warnings.
+
+### Section 2B: Two-Person Integrity
+For review-required packets, review claims from the same identity as the executor are prohibited.
+
+**Rationale:** Independent verification is mandatory in regulated controls.
+
+**Enforcement:** `review-claim` rejects same-identity reviewer claims.
 
 ### Section 3: Required Evidence
 No packet may transition to DONE without evidence string linking to deliverables and validation results.

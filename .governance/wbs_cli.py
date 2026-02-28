@@ -918,7 +918,7 @@ def check_deps_met(packet_id: str, definition: dict, state: dict) -> tuple:
     return True, None
 
 
-def cmd_claim(packet_id: str, agent: str) -> bool:
+def cmd_claim(packet_id: str, agent: str, context_attestation: list = None) -> bool:
     """Claim a packet."""
     ok, msg, data = _run_lifecycle_with_git(
         packet_id=packet_id,
@@ -926,7 +926,7 @@ def cmd_claim(packet_id: str, agent: str) -> bool:
         agent=agent,
         operation=lambda: (
             lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
-        )(governance_engine().claim(packet_id, agent)),
+        )(governance_engine().claim(packet_id, agent, context_attestation=context_attestation)),
     )
     if JSON_OUTPUT:
         output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
@@ -968,6 +968,21 @@ def _load_risk_entries_from_json(raw: str) -> list:
             return payload["risks"]
         return [payload]
     raise ValueError("Risk JSON must be an object or array")
+
+
+def _load_json_object_file(path: str) -> dict:
+    fp = Path(path).expanduser()
+    if not fp.is_absolute():
+        fp = GOV.parent / fp
+    if not fp.exists():
+        raise ValueError(f"File not found: {path}")
+    try:
+        payload = json.loads(fp.read_text())
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in {path}: {e}")
+    if not isinstance(payload, dict):
+        raise ValueError(f"Expected JSON object in {path}")
+    return payload
 
 
 def _annotate_done_risk_ack(
@@ -1118,6 +1133,271 @@ def cmd_note(packet_id: str, agent: str, notes: str) -> bool:
     else:
         print(red(_format_error(msg)))
     return ok
+
+
+def cmd_preflight(packet_id: str, agent: str, assessment: dict) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="preflight",
+        agent=agent,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().preflight(packet_id, agent, assessment)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_preflight_approve(packet_id: str, supervisor: str) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="preflight_approve",
+        agent=supervisor,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().preflight_approve(packet_id, supervisor)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_preflight_return(packet_id: str, supervisor: str, notes: str) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="preflight_return",
+        agent=supervisor,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().preflight_return(packet_id, supervisor, notes)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(yellow(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_heartbeat(
+    packet_id: str,
+    agent: str,
+    status: str,
+    decisions: str = "",
+    obstacles: str = "",
+    completion_estimate: str = "",
+) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="heartbeat",
+        agent=agent,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().heartbeat(packet_id, agent, status, decisions, obstacles, completion_estimate)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_check_stalled(packet_id: str = "") -> bool:
+    ok, msg = governance_engine().check_stalled(packet_id)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "packet_id": packet_id or None})
+    elif ok:
+        print(yellow(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_review_claim(packet_id: str, reviewer: str) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="review_claim",
+        agent=reviewer,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().review_claim(packet_id, reviewer)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_review_submit(packet_id: str, reviewer: str, verdict: str, assessment: dict) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="review_submit",
+        agent=reviewer,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().review_submit(packet_id, reviewer, verdict, assessment)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_review_escalate(packet_id: str, reviewer: str, reason: str) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="review_escalate",
+        agent=reviewer,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().review_escalate(packet_id, reviewer, reason)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(yellow(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_promote(packet_id: str, supervisor: str, template_id: str, tags: list, summary: str) -> bool:
+    ok, msg, data = _run_lifecycle_with_git(
+        packet_id=packet_id,
+        action="promote",
+        agent=supervisor,
+        operation=lambda: (
+            lambda result: (result[0], result[1], {"decision": {}, "payload": {}})
+        )(governance_engine().promote_template(packet_id, supervisor, template_id, tags=tags, summary=summary)),
+    )
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg, "decision": data.get("decision", {}), "payload": data})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_templates_list() -> bool:
+    payload = governance_engine().templates_list()
+    if JSON_OUTPUT:
+        output_json(payload)
+    else:
+        rows = payload.get("templates", [])
+        if not rows:
+            print("No templates")
+            return True
+        print(f"\n{'Template':<28} {'Version':<8} {'Deprecated':<11} {'Tags'}")
+        print("-" * 80)
+        for row in rows:
+            print(
+                f"{row.get('template_id', ''):<28} {row.get('version', ''):<8} "
+                f"{str(bool(row.get('deprecated'))):<11} {','.join(row.get('tags', []))}"
+            )
+    return True
+
+
+def cmd_templates_show(template_id: str) -> bool:
+    ok, payload = governance_engine().templates_show(template_id)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "template": payload})
+    elif ok:
+        print(json.dumps(payload, indent=2))
+    else:
+        print(red(_format_error(payload.get("message", "Template not found"))))
+    return ok
+
+
+def cmd_templates_deprecate(template_id: str, supervisor: str, reason: str, replacement: str = "") -> bool:
+    ok, msg = governance_engine().templates_deprecate(template_id, supervisor, reason, replacement=replacement)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg})
+    elif ok:
+        print(yellow(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_ontology_validate(packet_id: str) -> bool:
+    ok, payload = governance_engine().ontology_validate(packet_id)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "result": payload})
+    elif ok:
+        print(json.dumps(payload, indent=2))
+    else:
+        print(red(_format_error(payload.get("message", "Ontology validation failed"))))
+    return ok
+
+
+def cmd_ontology_check_drift() -> bool:
+    payload = governance_engine().ontology_check_drift()
+    if JSON_OUTPUT:
+        output_json(payload)
+    else:
+        print(json.dumps(payload, indent=2))
+    return True
+
+
+def cmd_ontology_propose(actor: str, payload: dict) -> bool:
+    ok, msg = governance_engine().ontology_propose(actor, payload)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "proposal_id": msg if ok else None, "message": msg})
+    elif ok:
+        print(green(f"Ontology proposal created: {msg}"))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_ontology_approve(proposal_id: str, supervisor: str) -> bool:
+    ok, msg = governance_engine().ontology_approve(proposal_id, supervisor)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg})
+    elif ok:
+        print(green(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_ontology_reject(proposal_id: str, supervisor: str, reason: str) -> bool:
+    ok, msg = governance_engine().ontology_reject(proposal_id, supervisor, reason)
+    if JSON_OUTPUT:
+        output_json({"success": ok, "message": msg})
+    elif ok:
+        print(yellow(msg))
+    else:
+        print(red(_format_error(msg)))
+    return ok
+
+
+def cmd_ontology_history() -> bool:
+    payload = governance_engine().ontology_history()
+    if JSON_OUTPUT:
+        output_json(payload)
+    else:
+        print(json.dumps(payload, indent=2))
+    return True
 
 
 def cmd_fail(packet_id: str, agent: str, reason: str = "") -> bool:
@@ -1326,7 +1606,13 @@ def cmd_status():
                     pkts.append({
                         "id": pkt["id"], "wbs_ref": pkt["wbs_ref"], "title": pkt["title"],
                         "status": normalize_runtime_status(ps.get("status", "pending")), "assigned_to": ps.get("assigned_to"),
-                        "notes": ps.get("notes")
+                        "notes": ps.get("notes"),
+                        "started_at": ps.get("started_at"),
+                        "completed_at": ps.get("completed_at"),
+                        "last_heartbeat_at": ps.get("last_heartbeat_at"),
+                        "context_attestation": ps.get("context_attestation"),
+                        "preflight": ps.get("preflight"),
+                        "review": ps.get("review"),
                     })
             areas.append({
                 "id": area["id"],
@@ -1360,7 +1646,16 @@ def cmd_status():
                 status = normalize_runtime_status(pstate.get("status", "pending")).upper()
                 assigned = pstate.get("assigned_to") or "-"
 
-                status_color = {"DONE": green, "FAILED": red, "BLOCKED": red, "IN_PROGRESS": yellow}.get(status, dim)
+                status_color = {
+                    "DONE": green,
+                    "FAILED": red,
+                    "BLOCKED": red,
+                    "ESCALATED": red,
+                    "IN_PROGRESS": yellow,
+                    "STALLED": yellow,
+                    "REVIEW": blue,
+                    "PREFLIGHT": blue,
+                }.get(status, dim)
                 print(f"  {pid:<10} {pkt['wbs_ref']:<6} {status_color(status):<14} {assigned:<12} {pkt['title'][:30]}")
         print()
 
@@ -1382,7 +1677,7 @@ def cmd_progress():
 
     print("\nProgress:")
     print("-" * 25)
-    for status in ["pending", "in_progress", "done", "failed", "blocked"]:
+    for status in ["pending", "preflight", "in_progress", "stalled", "review", "escalated", "done", "failed", "blocked"]:
         n = counts.get(status, 0)
         if n > 0:
             print(f"  {status:<12}: {n:>3}")
@@ -2496,8 +2791,19 @@ def print_help():
     print("  validate-packet [path] Validate packets against packet schema")
     print("  closeout-l2 <area> <agent> <drift-md> [notes] Close level-2 area with drift assessment")
     print()
-    print("  claim <id> <agent>    Claim a packet")
+    print("  claim <id> <agent> [--context-attestation '[\"file1\",\"file2\"]'] Claim a packet")
+    print("  preflight <id> <agent> --assessment <json_file> Submit readiness assessment")
+    print("  preflight-approve <id> <supervisor> Approve preflight and enter in_progress")
+    print("  preflight-return <id> <supervisor> --notes <text> Return packet to pending")
+    print("  heartbeat <id> <agent> --status <text> [--decisions <text>] [--obstacles <text>] [--estimate <text>]")
+    print("  check-stalled [packet_id] Evaluate stall thresholds and apply STALLED transitions")
     print("  done <id> <agent> [notes] --risk <none|declared> [--risk-file path|--risk-json json]")
+    print("  review-claim <id> <reviewer> Claim review assignment")
+    print("  review-submit <id> <reviewer> --verdict <APPROVE|REJECT|ESCALATE> --assessment <json_file>")
+    print("  review-escalate <id> <reviewer> --reason <text> Escalate review manually")
+    print("  promote <id> <supervisor> --template-id <id> [--tags a,b] [--summary text]")
+    print("  templates list|show|deprecate Template lifecycle commands")
+    print("  ontology validate|check-drift|propose|approve|reject|history Ontology governance commands")
     print("  note <id> <agent>     Update notes")
     print("  fail <id> <agent>     Mark failed")
     print("  reset <id>            Reset to pending")
@@ -2758,9 +3064,92 @@ def main():
                 sys.exit(1)
         elif cmd == "claim":
             if len(args) < 3:
-                print("Usage: wbs_cli.py claim <packet_id> <agent>")
+                print("Usage: wbs_cli.py claim <packet_id> <agent> [--context-attestation '[\"file1\",\"file2\"]']")
                 sys.exit(1)
-            if require_state() and not cmd_claim(args[1], args[2]):
+            packet_id = args[1]
+            agent = args[2]
+            context_attestation = None
+            extra = args[3:]
+            i = 0
+            while i < len(extra):
+                token = extra[i]
+                if token == "--context-attestation":
+                    if i + 1 >= len(extra):
+                        print("Usage: wbs_cli.py claim <packet_id> <agent> [--context-attestation '[\"file1\",\"file2\"]']")
+                        sys.exit(1)
+                    raw = extra[i + 1]
+                    try:
+                        parsed = json.loads(raw)
+                    except json.JSONDecodeError as e:
+                        print(red(f"Invalid --context-attestation JSON: {e}"))
+                        sys.exit(1)
+                    if not isinstance(parsed, list):
+                        print(red("--context-attestation must be a JSON array of file paths"))
+                        sys.exit(1)
+                    context_attestation = [str(item) for item in parsed if str(item).strip()]
+                    i += 2
+                    continue
+                print("Usage: wbs_cli.py claim <packet_id> <agent> [--context-attestation '[\"file1\",\"file2\"]']")
+                sys.exit(1)
+            if require_state() and not cmd_claim(packet_id, agent, context_attestation=context_attestation):
+                sys.exit(1)
+        elif cmd == "preflight":
+            if len(args) < 5 or args[3] != "--assessment":
+                print("Usage: wbs_cli.py preflight <packet_id> <agent> --assessment <json_file>")
+                sys.exit(1)
+            assessment = _load_json_object_file(args[4])
+            if require_state() and not cmd_preflight(args[1], args[2], assessment):
+                sys.exit(1)
+        elif cmd == "preflight-approve":
+            if len(args) < 3:
+                print("Usage: wbs_cli.py preflight-approve <packet_id> <supervisor>")
+                sys.exit(1)
+            if require_state() and not cmd_preflight_approve(args[1], args[2]):
+                sys.exit(1)
+        elif cmd == "preflight-return":
+            if len(args) < 5 or args[3] != "--notes":
+                print("Usage: wbs_cli.py preflight-return <packet_id> <supervisor> --notes <text>")
+                sys.exit(1)
+            if require_state() and not cmd_preflight_return(args[1], args[2], args[4]):
+                sys.exit(1)
+        elif cmd == "heartbeat":
+            if len(args) < 5:
+                print("Usage: wbs_cli.py heartbeat <packet_id> <agent> --status <text> [--decisions <text>] [--obstacles <text>] [--estimate <text>]")
+                sys.exit(1)
+            packet_id = args[1]
+            agent = args[2]
+            status_text = ""
+            decisions = ""
+            obstacles = ""
+            estimate = ""
+            extra = args[3:]
+            i = 0
+            while i < len(extra):
+                token = extra[i]
+                if token not in ("--status", "--decisions", "--obstacles", "--estimate"):
+                    print("Usage: wbs_cli.py heartbeat <packet_id> <agent> --status <text> [--decisions <text>] [--obstacles <text>] [--estimate <text>]")
+                    sys.exit(1)
+                if i + 1 >= len(extra):
+                    print("Usage: wbs_cli.py heartbeat <packet_id> <agent> --status <text> [--decisions <text>] [--obstacles <text>] [--estimate <text>]")
+                    sys.exit(1)
+                value = extra[i + 1]
+                if token == "--status":
+                    status_text = value
+                elif token == "--decisions":
+                    decisions = value
+                elif token == "--obstacles":
+                    obstacles = value
+                elif token == "--estimate":
+                    estimate = value
+                i += 2
+            if not status_text:
+                print("heartbeat requires --status")
+                sys.exit(1)
+            if require_state() and not cmd_heartbeat(packet_id, agent, status_text, decisions, obstacles, estimate):
+                sys.exit(1)
+        elif cmd == "check-stalled":
+            packet_id = args[1] if len(args) > 1 else ""
+            if require_state() and not cmd_check_stalled(packet_id):
                 sys.exit(1)
         elif cmd == "done":
             if len(args) < 3:
@@ -2813,6 +3202,149 @@ def main():
                     sys.exit(1)
 
             if require_state() and not cmd_done(packet_id, agent, notes, risk_ack=risk_ack, risk_entries=parsed_risks):
+                sys.exit(1)
+        elif cmd == "review-claim":
+            if len(args) < 3:
+                print("Usage: wbs_cli.py review-claim <packet_id> <reviewer>")
+                sys.exit(1)
+            if require_state() and not cmd_review_claim(args[1], args[2]):
+                sys.exit(1)
+        elif cmd == "review-submit":
+            if len(args) < 7:
+                print("Usage: wbs_cli.py review-submit <packet_id> <reviewer> --verdict <APPROVE|REJECT|ESCALATE> --assessment <json_file>")
+                sys.exit(1)
+            packet_id = args[1]
+            reviewer = args[2]
+            verdict = ""
+            assessment_path = ""
+            extra = args[3:]
+            i = 0
+            while i < len(extra):
+                token = extra[i]
+                if token not in ("--verdict", "--assessment"):
+                    print("Usage: wbs_cli.py review-submit <packet_id> <reviewer> --verdict <APPROVE|REJECT|ESCALATE> --assessment <json_file>")
+                    sys.exit(1)
+                if i + 1 >= len(extra):
+                    print("Usage: wbs_cli.py review-submit <packet_id> <reviewer> --verdict <APPROVE|REJECT|ESCALATE> --assessment <json_file>")
+                    sys.exit(1)
+                value = extra[i + 1]
+                if token == "--verdict":
+                    verdict = value
+                else:
+                    assessment_path = value
+                i += 2
+            if not verdict or not assessment_path:
+                print("review-submit requires --verdict and --assessment")
+                sys.exit(1)
+            assessment = _load_json_object_file(assessment_path)
+            if require_state() and not cmd_review_submit(packet_id, reviewer, verdict, assessment):
+                sys.exit(1)
+        elif cmd == "review-escalate":
+            if len(args) < 5 or args[3] != "--reason":
+                print("Usage: wbs_cli.py review-escalate <packet_id> <reviewer> --reason <text>")
+                sys.exit(1)
+            if require_state() and not cmd_review_escalate(args[1], args[2], args[4]):
+                sys.exit(1)
+        elif cmd == "promote":
+            if len(args) < 6:
+                print("Usage: wbs_cli.py promote <packet_id> <supervisor> --template-id <id> [--tags a,b] [--summary text]")
+                sys.exit(1)
+            packet_id = args[1]
+            supervisor = args[2]
+            template_id = ""
+            tags = []
+            summary = ""
+            extra = args[3:]
+            i = 0
+            while i < len(extra):
+                token = extra[i]
+                if token not in ("--template-id", "--tags", "--summary"):
+                    print("Usage: wbs_cli.py promote <packet_id> <supervisor> --template-id <id> [--tags a,b] [--summary text]")
+                    sys.exit(1)
+                if i + 1 >= len(extra):
+                    print("Usage: wbs_cli.py promote <packet_id> <supervisor> --template-id <id> [--tags a,b] [--summary text]")
+                    sys.exit(1)
+                value = extra[i + 1]
+                if token == "--template-id":
+                    template_id = value
+                elif token == "--tags":
+                    tags = [item.strip() for item in value.split(",") if item.strip()]
+                elif token == "--summary":
+                    summary = value
+                i += 2
+            if not template_id:
+                print("promote requires --template-id")
+                sys.exit(1)
+            if require_state() and not cmd_promote(packet_id, supervisor, template_id, tags, summary):
+                sys.exit(1)
+        elif cmd == "templates":
+            if len(args) < 2:
+                print("Usage: wbs_cli.py templates <list|show|deprecate> ...")
+                sys.exit(1)
+            sub = args[1]
+            if sub == "list":
+                if not cmd_templates_list():
+                    sys.exit(1)
+            elif sub == "show":
+                if len(args) < 3:
+                    print("Usage: wbs_cli.py templates show <template_id>")
+                    sys.exit(1)
+                if not cmd_templates_show(args[2]):
+                    sys.exit(1)
+            elif sub == "deprecate":
+                if len(args) < 6 or args[4] != "--reason":
+                    print("Usage: wbs_cli.py templates deprecate <template_id> <supervisor> --reason <text> [--replacement id]")
+                    sys.exit(1)
+                replacement = ""
+                if "--replacement" in args[5:]:
+                    idx = args.index("--replacement", 5)
+                    if idx + 1 >= len(args):
+                        print("Usage: wbs_cli.py templates deprecate <template_id> <supervisor> --reason <text> [--replacement id]")
+                        sys.exit(1)
+                    replacement = args[idx + 1]
+                if not cmd_templates_deprecate(args[2], args[3], args[5], replacement):
+                    sys.exit(1)
+            else:
+                print("Usage: wbs_cli.py templates <list|show|deprecate> ...")
+                sys.exit(1)
+        elif cmd == "ontology":
+            if len(args) < 2:
+                print("Usage: wbs_cli.py ontology <validate|check-drift|propose|approve|reject|history> ...")
+                sys.exit(1)
+            sub = args[1]
+            if sub == "validate":
+                if len(args) < 3:
+                    print("Usage: wbs_cli.py ontology validate <packet_id>")
+                    sys.exit(1)
+                if not cmd_ontology_validate(args[2]):
+                    sys.exit(1)
+            elif sub == "check-drift":
+                if not cmd_ontology_check_drift():
+                    sys.exit(1)
+            elif sub == "propose":
+                if len(args) < 6 or args[2] != "--actor" or args[4] != "--payload":
+                    print("Usage: wbs_cli.py ontology propose --actor <actor> --payload <json_file>")
+                    sys.exit(1)
+                payload = _load_json_object_file(args[5])
+                if not cmd_ontology_propose(args[3], payload):
+                    sys.exit(1)
+            elif sub == "approve":
+                if len(args) < 4:
+                    print("Usage: wbs_cli.py ontology approve <proposal_id> <supervisor>")
+                    sys.exit(1)
+                if not cmd_ontology_approve(args[2], args[3]):
+                    sys.exit(1)
+            elif sub == "reject":
+                if len(args) < 6 or args[4] != "--reason":
+                    print("Usage: wbs_cli.py ontology reject <proposal_id> <supervisor> --reason <text>")
+                    sys.exit(1)
+                if not cmd_ontology_reject(args[2], args[3], args[5]):
+                    sys.exit(1)
+            elif sub == "history":
+                if not cmd_ontology_history():
+                    sys.exit(1)
+            else:
+                print("Usage: wbs_cli.py ontology <validate|check-drift|propose|approve|reject|history> ...")
                 sys.exit(1)
         elif cmd == "note":
             if len(args) < 4:

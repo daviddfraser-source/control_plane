@@ -27,6 +27,11 @@
       "id": "74-0",
       "title": "Shipping Hygiene",
       "description": "Enforce source-only shipping so installable/generated artifacts are never included in clone-and-own releases."
+    },
+    {
+      "id": "75-0",
+      "title": "Governance Enhancements Program",
+      "description": "Implement PRD-SUB-2026-002 lifecycle + semantic governance enhancements with deterministic controls and full governance-doc synchronization."
     }
   ],
   "packets": [
@@ -127,6 +132,181 @@
       "area_id": "74-0",
       "title": "Validate shipping hygiene end-to-end",
       "scope": "Run shipping checks plus build/lint/typecheck on a clean workspace and produce evidence showing release bundles exclude installable/generated libraries while retaining reproducible setup via lockfiles."
+    },
+    {
+      "id": "GOV-751",
+      "wbs_ref": "5.1",
+      "area_id": "75-0",
+      "title": "PRD hardening and execution contract",
+      "scope": "Convert PRD-SUB-2026-002 draft into implementation-ready contract decisions (identity model, deterministic gating boundaries, migration/version policy, authority model) and publish as governed design doc."
+    },
+    {
+      "id": "GOV-752",
+      "wbs_ref": "5.2",
+      "area_id": "75-0",
+      "title": "State machine and log schema extension design",
+      "scope": "Define canonical enum/state transitions for PREFLIGHT, STALLED, REVIEW, ESCALATED plus structured event schema/versioning for preflight, heartbeat, review, ontology, and template events."
+    },
+    {
+      "id": "GOV-753",
+      "wbs_ref": "5.3",
+      "area_id": "75-0",
+      "title": "Governance document baseline update",
+      "scope": "Update constitution, AGENTS.md, README, and governance workflow docs to describe new lifecycle states, role boundaries, and migration posture before feature implementation begins."
+    },
+    {
+      "id": "GOV-754",
+      "wbs_ref": "5.4",
+      "area_id": "75-0",
+      "title": "Pre-flight engine transitions",
+      "scope": "Implement PREFLIGHT state handling with packet/global preflight_required controls, transition guards, timeout fallback to pending, and append-only event logging."
+    },
+    {
+      "id": "GOV-755",
+      "wbs_ref": "5.5",
+      "area_id": "75-0",
+      "title": "Pre-flight CLI and API surface",
+      "scope": "Add preflight, preflight-approve, preflight-return command/API paths with validation of readiness assessment structure and supervisor decision recording."
+    },
+    {
+      "id": "GOV-756",
+      "wbs_ref": "5.6",
+      "area_id": "75-0",
+      "title": "Pre-flight dashboard integration",
+      "scope": "Add preflight status visibility, assessment viewer, and approval/return controls in control-plane UI without breaking existing packet views."
+    },
+    {
+      "id": "GOV-757",
+      "wbs_ref": "5.7",
+      "area_id": "75-0",
+      "title": "Heartbeat telemetry ingestion",
+      "scope": "Add heartbeat command/API ingestion and structured event persistence fields (status, decisions, obstacles, estimate) with packet-level heartbeat_required controls."
+    },
+    {
+      "id": "GOV-758",
+      "wbs_ref": "5.8",
+      "area_id": "75-0",
+      "title": "Stall detection and STALLED transitions",
+      "scope": "Implement heartbeat interval policy, auto-transition to STALLED on missed threshold, resume/reassignment semantics, and supervisor alert hooks."
+    },
+    {
+      "id": "GOV-759",
+      "wbs_ref": "5.9",
+      "area_id": "75-0",
+      "title": "Telemetry dashboard stream",
+      "scope": "Add packet heartbeat timeline, age indicators, and stalled-state highlighting to control-plane UX with filterable packet-level history."
+    },
+    {
+      "id": "GOV-760",
+      "wbs_ref": "5.10",
+      "area_id": "75-0",
+      "title": "Context manifest and attestation core",
+      "scope": "Implement context_manifest and project context_policy parsing/validation plus claim-time required-file attestation enforcement and warning-level optional-file handling."
+    },
+    {
+      "id": "GOV-761",
+      "wbs_ref": "5.11",
+      "area_id": "75-0",
+      "title": "Context attestation UX and reporting",
+      "scope": "Expose context attestation evidence and policy violations in packet viewer/status outputs and API payloads for supervisor review."
+    },
+    {
+      "id": "GOV-762",
+      "wbs_ref": "5.12",
+      "area_id": "75-0",
+      "title": "Phase A test and migration suite",
+      "scope": "Deliver regression and migration tests covering preflight, heartbeat/stall, and context governance with backward compatibility for legacy packets lacking new fields."
+    },
+    {
+      "id": "GOV-763",
+      "wbs_ref": "5.13",
+      "area_id": "75-0",
+      "title": "Review state and two-person integrity core",
+      "scope": "Implement REVIEW and ESCALATED transitions, review cycle policy, and hard rejection of same-identity executor/reviewer assignments."
+    },
+    {
+      "id": "GOV-764",
+      "wbs_ref": "5.14",
+      "area_id": "75-0",
+      "title": "Review CLI/API and assessment model",
+      "scope": "Add review-claim, review-submit, review-escalate command/API paths and required structured review assessment validation."
+    },
+    {
+      "id": "GOV-765",
+      "wbs_ref": "5.15",
+      "area_id": "75-0",
+      "title": "Review dashboard and verdict history",
+      "scope": "Add review queue, reviewer identity visibility, verdict history, and reject/resubmit cycle indicators in control-plane UI."
+    },
+    {
+      "id": "GOV-766",
+      "wbs_ref": "5.16",
+      "area_id": "75-0",
+      "title": "Golden template promotion core",
+      "scope": "Implement promote/templates storage model under .governance/templates with versioning, deprecation metadata, and sanitized capture rules."
+    },
+    {
+      "id": "GOV-767",
+      "wbs_ref": "5.17",
+      "area_id": "75-0",
+      "title": "Template reference validation and analytics",
+      "scope": "Implement template_ref packet checks, non-blocking conformance warnings, and usage/outcome statistics reporting for dashboard/API."
+    },
+    {
+      "id": "GOV-768",
+      "wbs_ref": "5.18",
+      "area_id": "75-0",
+      "title": "Phase B test and migration suite",
+      "scope": "Deliver regression tests for review integrity and template lifecycle plus migration compatibility for repositories without template metadata."
+    },
+    {
+      "id": "GOV-769",
+      "wbs_ref": "5.19",
+      "area_id": "75-0",
+      "title": "Ontology artifact model bootstrap",
+      "scope": "Introduce ontology.md and ontology.json contract loaders, schema validation, version tracking, and project-level enablement switches."
+    },
+    {
+      "id": "GOV-770",
+      "wbs_ref": "5.20",
+      "area_id": "75-0",
+      "title": "Deterministic ontology validation on completion",
+      "scope": "Implement entity/relationship/invariant deterministic checks on done/review submission paths with configurable warning/error severity handling."
+    },
+    {
+      "id": "GOV-771",
+      "wbs_ref": "5.21",
+      "area_id": "75-0",
+      "title": "Ontology mutation governance workflow",
+      "scope": "Implement ontology-propose/approve/reject/history flow with append-only provenance and prohibition of unmanaged ontology mutation paths."
+    },
+    {
+      "id": "GOV-772",
+      "wbs_ref": "5.22",
+      "area_id": "75-0",
+      "title": "Ontology drift detection and health metrics",
+      "scope": "Add cross-packet drift heuristics (advisory mode), dashboard ontology health indicators, and supervisor escalation hooks for persistent unresolved drift."
+    },
+    {
+      "id": "GOV-773",
+      "wbs_ref": "5.23",
+      "area_id": "75-0",
+      "title": "Phase C test and migration suite",
+      "scope": "Deliver ontology governance regression tests (validation, mutation, drift signals) and backward-compatible migration behavior when ontology governance is disabled."
+    },
+    {
+      "id": "GOV-774",
+      "wbs_ref": "5.24",
+      "area_id": "75-0",
+      "title": "Comprehensive governance doc synchronization",
+      "scope": "Synchronize constitution, AGENTS.md, README, governance workflow docs, packet standards, and ontology guidance so runtime behavior and documentation are aligned post-implementation."
+    },
+    {
+      "id": "GOV-775",
+      "wbs_ref": "5.25",
+      "area_id": "75-0",
+      "title": "Program integration, rollout, and closeout report",
+      "scope": "Run end-to-end integration validation across phases, capture residual risks and rollout notes, and publish final delivery report with evidence references for all PRD enhancements."
     }
   ],
   "dependencies": {
@@ -168,6 +348,82 @@
       "SHIP-743",
       "SHIP-744",
       "SHIP-745"
+    ],
+    "GOV-752": [
+      "GOV-751"
+    ],
+    "GOV-753": [
+      "GOV-751"
+    ],
+    "GOV-754": [
+      "GOV-752"
+    ],
+    "GOV-755": [
+      "GOV-754"
+    ],
+    "GOV-756": [
+      "GOV-755"
+    ],
+    "GOV-757": [
+      "GOV-752"
+    ],
+    "GOV-758": [
+      "GOV-757"
+    ],
+    "GOV-759": [
+      "GOV-758"
+    ],
+    "GOV-760": [
+      "GOV-752"
+    ],
+    "GOV-761": [
+      "GOV-760"
+    ],
+    "GOV-762": [
+      "GOV-756",
+      "GOV-759",
+      "GOV-761"
+    ],
+    "GOV-763": [
+      "GOV-762"
+    ],
+    "GOV-764": [
+      "GOV-763"
+    ],
+    "GOV-765": [
+      "GOV-764"
+    ],
+    "GOV-766": [
+      "GOV-763"
+    ],
+    "GOV-767": [
+      "GOV-766"
+    ],
+    "GOV-768": [
+      "GOV-765",
+      "GOV-767"
+    ],
+    "GOV-769": [
+      "GOV-768"
+    ],
+    "GOV-770": [
+      "GOV-769"
+    ],
+    "GOV-771": [
+      "GOV-770"
+    ],
+    "GOV-772": [
+      "GOV-771"
+    ],
+    "GOV-773": [
+      "GOV-772"
+    ],
+    "GOV-774": [
+      "GOV-773"
+    ],
+    "GOV-775": [
+      "GOV-774",
+      "GOV-753"
     ]
   }
 }

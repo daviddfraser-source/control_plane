@@ -9,6 +9,7 @@ from governed_platform.governance.status import normalize_packet_status_map
 
 
 STATE_VERSION = "1.0"
+STATE_SCHEMA_VERSION = "1.2"
 
 
 class StateManager:
@@ -20,12 +21,32 @@ class StateManager:
     def default_state(self) -> Dict[str, Any]:
         return {
             "version": STATE_VERSION,
+            "schema_version": STATE_SCHEMA_VERSION,
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
             "packets": {},
             "log": [],
             "area_closeouts": {},
             "log_integrity_mode": "plain",
+            "templates": {},
+            "template_usage": {},
+            "ontology": {
+                "enabled": False,
+                "version": "0.0",
+                "proposals": [],
+                "history": [],
+                "last_drift_scan_at": None,
+            },
+            "governance_config": {
+                "preflight_required_default": False,
+                "preflight_timeout_seconds": 3600,
+                "heartbeat_interval_seconds": 900,
+                "stall_multiplier": 2,
+                "review_required_default": False,
+                "max_review_cycles": 3,
+                "review_agent_policy": "any_different_agent",
+                "ontology_enabled": False,
+            },
         }
 
     def load(self) -> Dict[str, Any]:
@@ -34,7 +55,33 @@ class StateManager:
         with open(self.state_path) as f:
             state = json.load(f)
         state = self._ensure_version(state)
+        state.setdefault("schema_version", STATE_SCHEMA_VERSION)
         state.setdefault("log_integrity_mode", "plain")
+        state.setdefault("templates", {})
+        state.setdefault("template_usage", {})
+        state.setdefault(
+            "ontology",
+            {
+                "enabled": False,
+                "version": "0.0",
+                "proposals": [],
+                "history": [],
+                "last_drift_scan_at": None,
+            },
+        )
+        state.setdefault(
+            "governance_config",
+            {
+                "preflight_required_default": False,
+                "preflight_timeout_seconds": 3600,
+                "heartbeat_interval_seconds": 900,
+                "stall_multiplier": 2,
+                "review_required_default": False,
+                "max_review_cycles": 3,
+                "review_agent_policy": "any_different_agent",
+                "ontology_enabled": False,
+            },
+        )
         state["log_integrity_mode"] = normalize_log_mode(state.get("log_integrity_mode"))
         return normalize_packet_status_map(state)
 

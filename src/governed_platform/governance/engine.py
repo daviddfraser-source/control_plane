@@ -1,7 +1,8 @@
 from datetime import datetime
 from pathlib import Path
+import json
 import re
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Optional
 
 from governed_platform.governance.interfaces import GovernanceInterface
 from governed_platform.governance.file_lock import file_lock
@@ -97,6 +98,115 @@ class GovernanceEngine(GovernanceInterface):
                 return pkt
         return {}
 
+    def _state_packet(self, state: Dict[str, Any], packet_id: str) -> Dict[str, Any]:
+        return state.setdefault("packets", {}).setdefault(
+            packet_id,
+            {
+                "status": "pending",
+                "assigned_to": None,
+                "started_at": None,
+                "completed_at": None,
+                "notes": None,
+            },
+        )
+
+    def _governance_config(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        return state.setdefault("governance_config", {})
+
+    def _packet_bool(self, packet: Dict[str, Any], key: str, default: bool = False) -> bool:
+        value = packet.get(key, default)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+
+    def _packet_heartbeat_required(self, state: Dict[str, Any], packet: Dict[str, Any]) -> bool:
+        if "heartbeat_required" in packet:
+            return self._packet_bool(packet, "heartbeat_required", True)
+        return True
+
+    def _packet_preflight_required(self, state: Dict[str, Any], packet: Dict[str, Any]) -> bool:
+        if "preflight_required" in packet:
+            return self._packet_bool(packet, "preflight_required", False)
+        return bool(self._governance_config(state).get("preflight_required_default", False))
+
+    def _packet_review_required(self, state: Dict[str, Any], packet: Dict[str, Any]) -> bool:
+        if "review_required" in packet:
+            return self._packet_bool(packet, "review_required", False)
+        return bool(self._governance_config(state).get("review_required_default", False))
+
+    def _heartbeat_interval_seconds(self, state: Dict[str, Any], packet: Dict[str, Any]) -> int:
+        value = packet.get("heartbeat_interval_seconds")
+        if value is None:
+            value = self._governance_config(state).get("heartbeat_interval_seconds", 900)
+        try:
+            return max(30, int(value))
+        except Exception:
+            return 900
+
+    def _stall_threshold_seconds(self, state: Dict[str, Any], packet: Dict[str, Any]) -> int:
+        mult = self._governance_config(state).get("stall_multiplier", 2)
+        try:
+            mult = max(1, int(mult))
+        except Exception:
+            mult = 2
+        return self._heartbeat_interval_seconds(state, packet) * mult
+
+    def _parse_time(self, value: str) -> Optional[datetime]:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(str(value))
+        except Exception:
+            return None
+
+    def _packet_context_manifest(self, packet: Dict[str, Any]) -> List[Dict[str, Any]]:
+        raw = packet.get("context_manifest")
+        if isinstance(raw, list):
+            out = []
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                file_path = str(item.get("file") or "").strip()
+                if not file_path:
+                    continue
+                out.append(
+                    {
+                        "file": file_path,
+                        "priority": int(item.get("priority", 99)),
+                        "required": bool(item.get("required", False)),
+                    }
+                )
+            return out
+        return []
+
+    def _validate_context_attestation(
+        self, packet: Dict[str, Any], context_attestation: Optional[List[str]]
+    ) -> Tuple[bool, str, List[str]]:
+        manifest = self._packet_context_manifest(packet)
+        if not manifest:
+            return True, "", []
+        attested = set(str(item).strip() for item in (context_attestation or []) if str(item).strip())
+        missing_required = [row["file"] for row in manifest if row.get("required") and row["file"] not in attested]
+        missing_optional = [row["file"] for row in manifest if not row.get("required") and row["file"] not in attested]
+        if missing_required:
+            return False, f"Missing required context files: {', '.join(missing_required)}", missing_optional
+        return True, "", missing_optional
+
+    def _template_conformance_warning(self, state: Dict[str, Any], packet: Dict[str, Any]) -> str:
+        template_ref = str(packet.get("template_ref") or "").strip()
+        if not template_ref:
+            return ""
+        template = state.get("templates", {}).get(template_ref)
+        if not template:
+            return f"Template reference not found: {template_ref}"
+        required = template.get("packet_spec", {}).get("exit_criteria", [])
+        candidate = packet.get("exit_criteria", [])
+        if isinstance(required, list) and required and not isinstance(candidate, list):
+            return f"Template {template_ref} expects exit_criteria list"
+        return ""
+
     def _collect_text_values(self, value: Any, out: List[str]) -> None:
         if isinstance(value, str):
             out.append(value)
@@ -160,7 +270,7 @@ class GovernanceEngine(GovernanceInterface):
         dropped = len(encoded) - len(trimmed.encode("utf-8"))
         return trimmed, dropped
 
-    def claim(self, packet_id: str, agent: str) -> Tuple[bool, str]:
+    def claim(self, packet_id: str, agent: str, context_attestation: list = None) -> Tuple[bool, str]:
         packet_definition = self._find_packet_definition(packet_id)
         required_capabilities = []
         if packet_definition and isinstance(packet_definition.get("required_capabilities"), list):
@@ -188,15 +298,49 @@ class GovernanceEngine(GovernanceInterface):
             ok, blocking = self._deps_met(state, packet_id)
             if not ok:
                 return False, f"Blocked by {blocking} (not done yet)"
-            pkt["status"] = "in_progress"
+            ctx_ok, ctx_reason, missing_optional = self._validate_context_attestation(
+                packet_definition,
+                context_attestation=context_attestation,
+            )
+            if not ctx_ok:
+                return False, ctx_reason
+
+            if self._packet_preflight_required(state, packet_definition):
+                pkt["status"] = "preflight"
+                event = "preflight_started"
+                message = f"{packet_id} claimed by {agent} (preflight required)"
+            else:
+                pkt["status"] = "in_progress"
+                event = "started"
+                message = f"{packet_id} claimed by {agent}"
             pkt["assigned_to"] = agent
             pkt["started_at"] = datetime.now().isoformat()
-            self._log(state, packet_id, "started", agent, f"Claimed by {agent}")
+            if context_attestation is not None:
+                pkt["context_attestation"] = list(context_attestation)
+            self._log(state, packet_id, event, agent, f"Claimed by {agent}")
+            if context_attestation is not None:
+                self._log(
+                    state,
+                    packet_id,
+                    "context_attested",
+                    agent,
+                    json.dumps({"attested": list(context_attestation), "missing_optional": missing_optional}),
+                )
+            if missing_optional:
+                self._log(
+                    state,
+                    packet_id,
+                    "context_warning",
+                    agent,
+                    f"Missing optional context files: {', '.join(missing_optional)}",
+                )
             if reason and reason != "approved":
                 self._log(state, packet_id, "capability_warning", agent, reason)
+            template_warning = self._template_conformance_warning(state, packet_definition)
+            if template_warning:
+                self._log(state, packet_id, "template_warning", agent, template_warning)
             self.state_manager.save_without_lock(state)
 
-        message = f"{packet_id} claimed by {agent}"
         if reason and reason != "approved":
             message += f" ({reason})"
         return True, message
@@ -208,18 +352,273 @@ class GovernanceEngine(GovernanceInterface):
         state = self._load()
         if packet_id not in state.get("packets", {}):
             return False, f"Packet {packet_id} not found"
+        packet_definition = self._find_packet_definition(packet_id)
         pkt = state["packets"][packet_id]
         current_status = normalize_runtime_status(pkt.get("status"))
         if current_status != "in_progress":
             return False, f"Packet {packet_id} is {current_status}, not in_progress"
         if self._active_handover(pkt):
             return False, f"Packet {packet_id} has active handover; resume before done"
+
+        ontology_on = bool(state.get("governance_config", {}).get("ontology_enabled")) or self._packet_bool(
+            packet_definition, "ontology_required", False
+        )
+        if ontology_on:
+            ok, result = self.ontology_validate(packet_id)
+            if not ok:
+                return False, result.get("message", "Ontology validation failed")
+            errors = [item for item in result.get("checks", []) if item.get("severity") == "error" and not item.get("ok")]
+            self._log(state, packet_id, "ontology_validated", agent, json.dumps(result))
+            if errors:
+                return False, f"Ontology validation failed ({len(errors)} errors)"
+
+        if self._packet_review_required(state, packet_definition):
+            pkt["status"] = "review"
+            pkt["review"] = {
+                "required": True,
+                "executor": agent,
+                "claimed_by": None,
+                "submitted_at": datetime.now().isoformat(),
+                "cycles": int(pkt.get("review", {}).get("cycles", 0)),
+            }
+            pkt["notes"] = notes
+            self._log(state, packet_id, "review_requested", agent, notes)
+            self._save(state)
+            return True, f"{packet_id} moved to review"
+
         pkt["status"] = "done"
         pkt["completed_at"] = datetime.now().isoformat()
         pkt["notes"] = notes
         self._log(state, packet_id, "completed", agent, notes)
         self._save(state)
         return True, f"{packet_id} marked done"
+
+    def preflight(self, packet_id: str, agent: str, assessment: Dict[str, Any]) -> Tuple[bool, str]:
+        required = ["context_confirmation", "ambiguity_register", "risk_flags", "execution_plan"]
+        missing = [key for key in required if key not in (assessment or {})]
+        if missing:
+            return False, f"Missing preflight assessment fields: {', '.join(missing)}"
+
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "preflight":
+            return False, f"Packet {packet_id} is not in preflight"
+        if pkt.get("assigned_to") and pkt.get("assigned_to") != agent:
+            return False, f"Packet {packet_id} owned by {pkt.get('assigned_to')}"
+
+        pkt["preflight"] = {
+            "assessment": assessment,
+            "submitted_by": agent,
+            "submitted_at": datetime.now().isoformat(),
+            "status": "submitted",
+            "review_notes": "",
+        }
+        self._log(state, packet_id, "preflight_submitted", agent, json.dumps(assessment))
+        self._save(state)
+        return True, f"{packet_id} preflight submitted"
+
+    def preflight_approve(self, packet_id: str, supervisor: str) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "preflight":
+            return False, f"Packet {packet_id} is not in preflight"
+        preflight = pkt.get("preflight", {})
+        if preflight.get("status") != "submitted":
+            return False, f"Packet {packet_id} preflight assessment not submitted"
+        pkt["status"] = "in_progress"
+        preflight["status"] = "approved"
+        preflight["reviewed_by"] = supervisor
+        preflight["reviewed_at"] = datetime.now().isoformat()
+        self._log(state, packet_id, "preflight_approved", supervisor, "")
+        self._save(state)
+        return True, f"{packet_id} moved to in_progress"
+
+    def preflight_return(self, packet_id: str, supervisor: str, notes: str) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "preflight":
+            return False, f"Packet {packet_id} is not in preflight"
+        preflight = pkt.get("preflight", {})
+        preflight["status"] = "returned"
+        preflight["reviewed_by"] = supervisor
+        preflight["reviewed_at"] = datetime.now().isoformat()
+        preflight["review_notes"] = notes
+        pkt["status"] = "pending"
+        pkt["assigned_to"] = None
+        pkt["started_at"] = None
+        self._log(state, packet_id, "preflight_returned", supervisor, notes)
+        self._save(state)
+        return True, f"{packet_id} returned to pending"
+
+    def heartbeat(
+        self,
+        packet_id: str,
+        agent: str,
+        status: str,
+        decisions: str = "",
+        obstacles: str = "",
+        completion_estimate: str = "",
+    ) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        packet_definition = self._find_packet_definition(packet_id)
+        runtime = normalize_runtime_status(pkt.get("status"))
+        if runtime not in ("in_progress", "stalled"):
+            return False, f"Packet {packet_id} is {runtime}, heartbeat only allowed in in_progress/stalled"
+        if pkt.get("assigned_to") and pkt.get("assigned_to") != agent:
+            return False, f"Packet {packet_id} owned by {pkt.get('assigned_to')}"
+
+        payload = {
+            "status": status,
+            "decisions": decisions,
+            "obstacles": obstacles,
+            "completion_estimate": completion_estimate,
+            "timestamp": datetime.now().isoformat(),
+        }
+        pkt["last_heartbeat_at"] = payload["timestamp"]
+        pkt["last_heartbeat"] = payload
+        if runtime == "stalled":
+            pkt["status"] = "in_progress"
+            self._log(state, packet_id, "resumed_from_stalled", agent, json.dumps(payload))
+        self._log(state, packet_id, "heartbeat", agent, json.dumps(payload))
+        if self._packet_heartbeat_required(state, packet_definition):
+            self._log(state, packet_id, "stall_window", agent, f"{self._stall_threshold_seconds(state, packet_definition)}s")
+        self._save(state)
+        return True, f"{packet_id} heartbeat recorded"
+
+    def check_stalled(self, packet_id: str = "") -> Tuple[bool, str]:
+        state = self._load()
+        now = datetime.now()
+        changed = 0
+        preflight_timeout = int(self._governance_config(state).get("preflight_timeout_seconds", 3600))
+        packet_ids = [packet_id] if packet_id else list(state.get("packets", {}).keys())
+        for pid in packet_ids:
+            pkt = state.get("packets", {}).get(pid)
+            if not isinstance(pkt, dict):
+                continue
+            packet_definition = self._find_packet_definition(pid)
+            runtime = normalize_runtime_status(pkt.get("status"))
+
+            if runtime == "preflight":
+                started = self._parse_time(pkt.get("started_at"))
+                if started and (now - started).total_seconds() > preflight_timeout:
+                    pkt["status"] = "pending"
+                    pkt["assigned_to"] = None
+                    pkt["started_at"] = None
+                    self._log(state, pid, "preflight_timeout", "system", "Auto-returned to pending")
+                    changed += 1
+                    continue
+
+            if not self._packet_heartbeat_required(state, packet_definition):
+                continue
+            if runtime != "in_progress":
+                continue
+            hb_at = self._parse_time(pkt.get("last_heartbeat_at")) or self._parse_time(pkt.get("started_at"))
+            if not hb_at:
+                continue
+            elapsed = (now - hb_at).total_seconds()
+            if elapsed > self._stall_threshold_seconds(state, packet_definition):
+                pkt["status"] = "stalled"
+                pkt["stalled_at"] = now.isoformat()
+                self._log(state, pid, "stalled", "system", f"Missed heartbeat threshold ({int(elapsed)}s)")
+                changed += 1
+        if changed:
+            self._save(state)
+            return True, f"{changed} packet(s) moved to stalled"
+        return True, "No stalled packets detected"
+
+    def review_claim(self, packet_id: str, reviewer: str) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "review":
+            return False, f"Packet {packet_id} is not in review"
+        review = pkt.setdefault("review", {})
+        executor = review.get("executor") or pkt.get("assigned_to")
+        if executor and executor == reviewer:
+            return False, "Two-person integrity violation: reviewer cannot equal executor"
+        if review.get("claimed_by") and review.get("claimed_by") != reviewer:
+            return False, f"Packet {packet_id} already claimed by reviewer {review.get('claimed_by')}"
+        review["claimed_by"] = reviewer
+        review["claimed_at"] = datetime.now().isoformat()
+        self._log(state, packet_id, "review_claimed", reviewer, "")
+        self._save(state)
+        return True, f"{packet_id} review claimed by {reviewer}"
+
+    def review_submit(
+        self,
+        packet_id: str,
+        reviewer: str,
+        verdict: str,
+        assessment: Dict[str, Any],
+    ) -> Tuple[bool, str]:
+        token = str(verdict or "").strip().upper()
+        if token not in {"APPROVE", "REJECT", "ESCALATE"}:
+            return False, "Invalid verdict. Use APPROVE, REJECT, or ESCALATE."
+        required = ["exit_criteria_assessment", "findings", "risk_flags"]
+        missing = [key for key in required if key not in (assessment or {})]
+        if missing:
+            return False, f"Missing review assessment fields: {', '.join(missing)}"
+
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "review":
+            return False, f"Packet {packet_id} is not in review"
+        review = pkt.setdefault("review", {})
+        if review.get("claimed_by") and review.get("claimed_by") != reviewer:
+            return False, f"Packet {packet_id} review owned by {review.get('claimed_by')}"
+
+        cycles = int(review.get("cycles", 0))
+        review["submitted_by"] = reviewer
+        review["submitted_at"] = datetime.now().isoformat()
+        review["verdict"] = token
+        review["assessment"] = assessment
+
+        if token == "APPROVE":
+            pkt["status"] = "done"
+            pkt["completed_at"] = datetime.now().isoformat()
+            self._log(state, packet_id, "review_approved", reviewer, json.dumps(assessment))
+        elif token == "REJECT":
+            pkt["status"] = "in_progress"
+            review["cycles"] = cycles + 1
+            self._log(state, packet_id, "review_rejected", reviewer, json.dumps(assessment))
+            max_cycles = int(self._governance_config(state).get("max_review_cycles", 3))
+            if review["cycles"] >= max_cycles:
+                pkt["status"] = "escalated"
+                self._log(state, packet_id, "review_auto_escalated", "system", f"cycles={review['cycles']}")
+        else:
+            pkt["status"] = "escalated"
+            self._log(state, packet_id, "review_escalated", reviewer, json.dumps(assessment))
+
+        self._save(state)
+        return True, f"{packet_id} review verdict {token}"
+
+    def review_escalate(self, packet_id: str, reviewer: str, reason: str) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "review":
+            return False, f"Packet {packet_id} is not in review"
+        pkt["status"] = "escalated"
+        review = pkt.setdefault("review", {})
+        review["escalated_by"] = reviewer
+        review["escalated_at"] = datetime.now().isoformat()
+        review["escalation_reason"] = reason
+        self._log(state, packet_id, "review_escalated", reviewer, reason)
+        self._save(state)
+        return True, f"{packet_id} escalated"
 
     def note(self, packet_id: str, agent: str, notes: str) -> Tuple[bool, str]:
         allowed, reason = self._approve("note", packet_id, agent=agent, notes=notes)
@@ -397,6 +796,10 @@ class GovernanceEngine(GovernanceInterface):
             "started_at": packet_state.get("started_at"),
             "completed_at": packet_state.get("completed_at"),
             "notes": packet_state.get("notes"),
+            "last_heartbeat_at": packet_state.get("last_heartbeat_at"),
+            "preflight": packet_state.get("preflight"),
+            "review": packet_state.get("review"),
+            "context_attestation": packet_state.get("context_attestation"),
         }
 
         deps = self.definition.get("dependencies", {})
@@ -622,6 +1025,248 @@ class GovernanceEngine(GovernanceInterface):
         self._log(state, f"AREA-{area_id}", "area_closed", agent, f"Drift assessment: {assessment_path}" + (f" | {notes}" if notes else ""))
         self._save(state)
         return True, f"Level-2 area {area_id} closed"
+
+    def _templates_root(self) -> Path:
+        return self.state_manager.state_path.parent / "templates"
+
+    def promote_template(
+        self,
+        packet_id: str,
+        supervisor: str,
+        template_id: str,
+        tags: list = None,
+        summary: str = "",
+    ) -> Tuple[bool, str]:
+        state = self._load()
+        pkt = state.get("packets", {}).get(packet_id)
+        if not pkt:
+            return False, f"Packet {packet_id} not found"
+        if normalize_runtime_status(pkt.get("status")) != "done":
+            return False, f"Packet {packet_id} must be done before promotion"
+        packet_def = self._find_packet_definition(packet_id)
+        if not packet_def:
+            return False, f"Packet definition {packet_id} missing"
+
+        template_key = str(template_id or "").strip()
+        if not template_key:
+            return False, "template_id is required"
+
+        record = {
+            "template_id": template_key,
+            "version": "v1",
+            "promoted_at": datetime.now().isoformat(),
+            "promoted_by": supervisor,
+            "source_packet_id": packet_id,
+            "summary": summary,
+            "tags": list(tags or []),
+            "packet_spec": {
+                "id": packet_def.get("id"),
+                "title": packet_def.get("title"),
+                "scope": packet_def.get("scope"),
+                "constraints": packet_def.get("constraints", []),
+                "exit_criteria": packet_def.get("exit_criteria", []),
+            },
+            "context_manifest": packet_def.get("context_manifest", []),
+            "review": pkt.get("review", {}),
+            "deprecated": False,
+            "deprecated_reason": "",
+            "replacement": "",
+        }
+        templates = state.setdefault("templates", {})
+        templates[template_key] = record
+        root = self._templates_root()
+        root.mkdir(parents=True, exist_ok=True)
+        target = root / f"{template_key}.json"
+        target.write_text(json.dumps(record, indent=2) + "\n")
+        self._log(state, packet_id, "template_promoted", supervisor, template_key)
+        self._save(state)
+        return True, f"Template promoted: {template_key}"
+
+    def templates_list(self) -> Dict[str, Any]:
+        state = self._load()
+        templates = state.get("templates", {})
+        rows = []
+        for key, value in sorted(templates.items()):
+            rows.append(
+                {
+                    "template_id": key,
+                    "version": value.get("version"),
+                    "deprecated": bool(value.get("deprecated")),
+                    "replacement": value.get("replacement"),
+                    "tags": value.get("tags", []),
+                    "promoted_at": value.get("promoted_at"),
+                }
+            )
+        return {"templates": rows}
+
+    def templates_show(self, template_id: str) -> Tuple[bool, Dict[str, Any]]:
+        state = self._load()
+        templates = state.get("templates", {})
+        item = templates.get(template_id)
+        if not item:
+            return False, {"message": f"Template {template_id} not found"}
+        return True, item
+
+    def templates_deprecate(
+        self,
+        template_id: str,
+        supervisor: str,
+        reason: str,
+        replacement: str = "",
+    ) -> Tuple[bool, str]:
+        state = self._load()
+        templates = state.get("templates", {})
+        item = templates.get(template_id)
+        if not item:
+            return False, f"Template {template_id} not found"
+        item["deprecated"] = True
+        item["deprecated_reason"] = reason
+        item["replacement"] = replacement or ""
+        item["deprecated_at"] = datetime.now().isoformat()
+        item["deprecated_by"] = supervisor
+        self._log(state, f"TEMPLATE-{template_id}", "template_deprecated", supervisor, reason)
+        self._save(state)
+        target = self._templates_root() / f"{template_id}.json"
+        if target.exists():
+            target.write_text(json.dumps(item, indent=2) + "\n")
+        return True, f"Template deprecated: {template_id}"
+
+    def _ontology_files(self) -> Tuple[Path, Path]:
+        repo_root = self.state_manager.state_path.parent.parent
+        return repo_root / "docs" / "ontology.md", repo_root / "docs" / "ontology.json"
+
+    def ontology_validate(self, packet_id: str) -> Tuple[bool, Dict[str, Any]]:
+        state = self._load()
+        packet = self._find_packet_definition(packet_id)
+        pkt = state.get("packets", {}).get(packet_id, {})
+        notes = str(pkt.get("notes") or "") + "\n" + str(packet.get("scope") or "")
+        ont_md, ont_json = self._ontology_files()
+        if not ont_json.exists():
+            return True, {"enabled": False, "message": "ontology.json not present", "checks": []}
+        try:
+            schema = json.loads(ont_json.read_text())
+        except Exception as exc:
+            return False, {"message": f"Invalid ontology schema: {exc}", "checks": []}
+
+        checks = []
+        entities = schema.get("entities", {})
+        for entity_id in entities.keys():
+            checks.append(
+                {
+                    "kind": "entity_reference",
+                    "target": entity_id,
+                    "severity": "warning",
+                    "ok": (entity_id in notes),
+                    "message": f"Entity '{entity_id}' referenced",
+                }
+            )
+        for inv in schema.get("invariants", []):
+            checks.append(
+                {
+                    "kind": "invariant",
+                    "target": inv.get("id"),
+                    "severity": str(inv.get("severity", "error")).lower(),
+                    "ok": True,
+                    "message": inv.get("assertion", ""),
+                }
+            )
+        return True, {"enabled": True, "ontology_path": str(ont_json), "checks": checks}
+
+    def ontology_check_drift(self) -> Dict[str, Any]:
+        state = self._load()
+        drifts = []
+        for pid, pkt in state.get("packets", {}).items():
+            runtime = normalize_runtime_status(pkt.get("status"))
+            if runtime not in ("in_progress", "review", "stalled"):
+                continue
+            if not pkt.get("notes"):
+                drifts.append(
+                    {
+                        "packet_id": pid,
+                        "severity": "warning",
+                        "message": "No packet notes available for semantic consistency scan",
+                    }
+                )
+        state.setdefault("ontology", {})["last_drift_scan_at"] = datetime.now().isoformat()
+        self._save(state)
+        return {"drifts": drifts, "count": len(drifts)}
+
+    def ontology_propose(self, actor: str, payload: Dict[str, Any]) -> Tuple[bool, str]:
+        state = self._load()
+        ontology = state.setdefault("ontology", {})
+        proposals = ontology.setdefault("proposals", [])
+        proposal_id = f"ONT-{len(proposals) + 1:04d}"
+        proposals.append(
+            {
+                "proposal_id": proposal_id,
+                "status": "pending",
+                "actor": actor,
+                "payload": payload,
+                "created_at": datetime.now().isoformat(),
+            }
+        )
+        self._log(state, "ONTOLOGY", "ontology_proposed", actor, proposal_id)
+        self._save(state)
+        return True, proposal_id
+
+    def ontology_approve(self, proposal_id: str, supervisor: str) -> Tuple[bool, str]:
+        state = self._load()
+        ontology = state.setdefault("ontology", {})
+        proposals = ontology.setdefault("proposals", [])
+        item = next((p for p in proposals if p.get("proposal_id") == proposal_id), None)
+        if not item:
+            return False, f"Proposal {proposal_id} not found"
+        if item.get("status") != "pending":
+            return False, f"Proposal {proposal_id} already {item.get('status')}"
+        item["status"] = "approved"
+        item["reviewed_by"] = supervisor
+        item["reviewed_at"] = datetime.now().isoformat()
+        ontology.setdefault("history", []).append(
+            {
+                "proposal_id": proposal_id,
+                "action": "approved",
+                "actor": supervisor,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        self._log(state, "ONTOLOGY", "ontology_approved", supervisor, proposal_id)
+        self._save(state)
+        return True, f"Proposal approved: {proposal_id}"
+
+    def ontology_reject(self, proposal_id: str, supervisor: str, reason: str) -> Tuple[bool, str]:
+        state = self._load()
+        ontology = state.setdefault("ontology", {})
+        proposals = ontology.setdefault("proposals", [])
+        item = next((p for p in proposals if p.get("proposal_id") == proposal_id), None)
+        if not item:
+            return False, f"Proposal {proposal_id} not found"
+        if item.get("status") != "pending":
+            return False, f"Proposal {proposal_id} already {item.get('status')}"
+        item["status"] = "rejected"
+        item["reason"] = reason
+        item["reviewed_by"] = supervisor
+        item["reviewed_at"] = datetime.now().isoformat()
+        ontology.setdefault("history", []).append(
+            {
+                "proposal_id": proposal_id,
+                "action": "rejected",
+                "reason": reason,
+                "actor": supervisor,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+        self._log(state, "ONTOLOGY", "ontology_rejected", supervisor, f"{proposal_id}: {reason}")
+        self._save(state)
+        return True, f"Proposal rejected: {proposal_id}"
+
+    def ontology_history(self) -> Dict[str, Any]:
+        state = self._load()
+        ontology = state.setdefault("ontology", {})
+        return {
+            "version": ontology.get("version", "0.0"),
+            "history": ontology.get("history", []),
+            "proposals": ontology.get("proposals", []),
+        }
     REQUIRED_DRIFT_SECTIONS = [
         "## Scope Reviewed",
         "## Expected vs Delivered",

@@ -1,16 +1,41 @@
 from typing import Any, Dict
 
 # Canonical runtime status values stored in state.
-RUNTIME_STATUS_VALUES = {"pending", "in_progress", "done", "failed", "blocked"}
+RUNTIME_STATUS_VALUES = {
+    "pending",
+    "preflight",
+    "in_progress",
+    "stalled",
+    "review",
+    "escalated",
+    "done",
+    "failed",
+    "blocked",
+}
 
 # Packet-definition/schema status values.
-PACKET_STATUS_VALUES = {"DRAFT", "PENDING", "IN_PROGRESS", "BLOCKED", "DONE", "FAILED"}
+PACKET_STATUS_VALUES = {
+    "DRAFT",
+    "PENDING",
+    "PREFLIGHT",
+    "IN_PROGRESS",
+    "STALLED",
+    "REVIEW",
+    "ESCALATED",
+    "BLOCKED",
+    "DONE",
+    "FAILED",
+}
 
 _RUNTIME_ALIASES = {
     "pending": "pending",
     "draft": "pending",
+    "preflight": "preflight",
     "in_progress": "in_progress",
     "inprogress": "in_progress",
+    "stalled": "stalled",
+    "review": "review",
+    "escalated": "escalated",
     "done": "done",
     "complete": "done",
     "completed": "done",
@@ -21,7 +46,11 @@ _RUNTIME_ALIASES = {
 
 _PACKET_TO_RUNTIME = {
     "PENDING": "pending",
+    "PREFLIGHT": "preflight",
     "IN_PROGRESS": "in_progress",
+    "STALLED": "stalled",
+    "REVIEW": "review",
+    "ESCALATED": "escalated",
     "DONE": "done",
     "FAILED": "failed",
     "BLOCKED": "blocked",
@@ -30,7 +59,11 @@ _PACKET_TO_RUNTIME = {
 
 _RUNTIME_TO_PACKET = {
     "pending": "PENDING",
+    "preflight": "PREFLIGHT",
     "in_progress": "IN_PROGRESS",
+    "stalled": "STALLED",
+    "review": "REVIEW",
+    "escalated": "ESCALATED",
     "done": "DONE",
     "failed": "FAILED",
     "blocked": "BLOCKED",

@@ -3,7 +3,16 @@
  * Migrated from app/src/ui/wbsGridTypes.ts for Next.js template library.
  */
 
-export type PacketStatus = "pending" | "in_progress" | "done" | "failed" | "blocked";
+export type PacketStatus =
+  | "pending"
+  | "preflight"
+  | "in_progress"
+  | "stalled"
+  | "review"
+  | "escalated"
+  | "done"
+  | "failed"
+  | "blocked";
 
 export interface WbsPacketRow {
   id: string;

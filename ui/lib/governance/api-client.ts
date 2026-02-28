@@ -53,6 +53,10 @@ export interface StatusPacket {
   notes: string | null;
   started_at: string | null;
   completed_at: string | null;
+  last_heartbeat_at?: string | null;
+  context_attestation?: string[] | null;
+  preflight?: Record<string, unknown> | null;
+  review?: Record<string, unknown> | null;
 }
 
 export interface StatusArea {
@@ -84,7 +88,11 @@ export interface ReadyResponse {
 
 export interface ProgressCounts {
   pending: number;
+  preflight?: number;
   in_progress: number;
+  stalled?: number;
+  review?: number;
+  escalated?: number;
   done: number;
   failed: number;
   blocked: number;

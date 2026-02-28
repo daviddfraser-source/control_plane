@@ -7,7 +7,11 @@ import type { WbsPacketRow } from "./types";
 
 export const STATUS_HEATMAP_COLORS: Record<WbsPacketRow["status"], string> = {
   pending: "#8b8b8b",
+  preflight: "#4f46e5",
   in_progress: "#2f80ed",
+  stalled: "#ea580c",
+  review: "#0284c7",
+  escalated: "#dc2626",
   done: "#27ae60",
   failed: "#eb5757",
   blocked: "#f2994a",

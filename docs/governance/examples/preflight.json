@@ -1,0 +1,24 @@
+{
+  "context_confirmation": {
+    "attested": ["constitution.md", "AGENTS.md", "docs/ontology.md"]
+  },
+  "ambiguity_register": [
+    {
+      "item": "Clarify reviewer assignment fallback",
+      "resolution": "Use any_different_agent policy"
+    }
+  ],
+  "risk_flags": [
+    {
+      "id": "RISK-PREFLIGHT-001",
+      "description": "Potential approval bottleneck"
+    }
+  ],
+  "execution_plan": {
+    "steps": [
+      "Implement engine transitions",
+      "Wire CLI commands",
+      "Update UI and docs"
+    ]
+  }
+}

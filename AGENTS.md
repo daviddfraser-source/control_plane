@@ -22,7 +22,7 @@ Use this file as executable governance, not background documentation.
   - after claim, load packet context with `python3 .governance/wbs_cli.py context <packet_id> --format json`
   - confirm owner and expected output artifact
 - During execution:
-  - follow packet lifecycle (`claim` -> execute -> `done`/`fail` -> `note`)
+  - follow packet lifecycle (`claim` -> `preflight` when required -> execute -> `heartbeat` for long runs -> `done`/`fail` -> `review` when required -> `note`)
   - if session transfer is required, use governed continuity commands (`handover` -> `resume`)
   - keep evidence paths current in packet notes
 - At closeout:
@@ -37,6 +37,8 @@ Use this file as executable governance, not background documentation.
 - Use `.governance/agents.json` for declared agent capability profiles and enforcement mode.
 - Ensure packet definitions include required governance fields (not only title/scope).
 - Packet viewer behavior should present the full packet object plus runtime state.
+- When `context_manifest` is present, include `--context-attestation` on claim.
+- When packets are in `review`, reviewer identity must be different from executor identity.
 
 ## Execution Discipline (Latest Practice)
 - One packet at a time per agent unless user requests parallelization.

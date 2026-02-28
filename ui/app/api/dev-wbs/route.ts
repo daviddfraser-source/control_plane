@@ -8,6 +8,10 @@ interface RuntimePacketState {
   notes?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
+  last_heartbeat_at?: string | null;
+  context_attestation?: string[] | null;
+  preflight?: Record<string, unknown> | null;
+  review?: Record<string, unknown> | null;
 }
 
 function findRepoRoot(): string {
@@ -57,6 +61,10 @@ export async function GET() {
             notes: runtime.notes ?? null,
             started_at: runtime.started_at ?? null,
             completed_at: runtime.completed_at ?? null,
+            last_heartbeat_at: runtime.last_heartbeat_at ?? null,
+            context_attestation: runtime.context_attestation ?? null,
+            preflight: runtime.preflight ?? null,
+            review: runtime.review ?? null,
           };
         });
       return {

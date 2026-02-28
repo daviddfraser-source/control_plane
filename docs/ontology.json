@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "domain": "substrate_governance",
+  "entities": {
+    "packet": {
+      "definition": "A governed work unit in the WBS lifecycle",
+      "required_attributes": ["packet_id", "title", "scope", "status"],
+      "anti_conflations": ["work_area"]
+    },
+    "review_assessment": {
+      "definition": "Independent review output for review-required packets",
+      "required_attributes": ["verdict", "findings", "risk_flags"],
+      "anti_conflations": ["execution_notes"]
+    }
+  },
+  "vocabulary": {
+    "milestone": {
+      "aliases": ["gate", "checkpoint"],
+      "anti_aliases": ["deliverable"],
+      "definition": "A point-in-time governance checkpoint"
+    }
+  },
+  "relationships": [
+    {
+      "from": "work_area",
+      "relation": "CONTAINS",
+      "to": "packet",
+      "cardinality": "1..*",
+      "invertible": false
+    }
+  ],
+  "invariants": [
+    {
+      "id": "INV_001",
+      "assertion": "A review-required packet cannot transition directly from in_progress to done",
+      "severity": "error"
+    },
+    {
+      "id": "INV_002",
+      "assertion": "A packet cannot be both done and failed",
+      "severity": "error"
+    }
+  ]
+}

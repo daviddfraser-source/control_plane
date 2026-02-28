@@ -21,7 +21,7 @@ This project provides a technical control plane for common failure modes:
 - weak audit trails for ownership, transitions, and evidence
 
 The approach is intentionally simple and inspectable:
-- explicit packet lifecycle (`pending`, `in_progress`, `done`, `failed`, `blocked`)
+- explicit packet lifecycle (`pending`, `preflight`, `in_progress`, `stalled`, `review`, `escalated`, `done`, `failed`, `blocked`)
 - dependency graph gating before execution
 - file-based state in `.governance/wbs-state.json`
 - append-only activity log entries on lifecycle events
@@ -69,11 +69,13 @@ scripts/reset-scaffold.sh
 ### Packet Lifecycle
 
 ```text
-PENDING --claim--> IN_PROGRESS --done--> DONE
-                      |                   |
-                    fail             unblocks
-                      v             downstream
-                   FAILED ---> BLOCKED
+PENDING --claim--> PREFLIGHT --approve--> IN_PROGRESS --done--> REVIEW --approve--> DONE
+   |                                      |  ^                      |                   |
+   |                                      |  | heartbeat resume     | reject            |
+   |                                      v  |                      v                   |
+   +-------------- claim (no preflight) STALLED                 IN_PROGRESS        unblocks
+                                                                                     downstream
+IN_PROGRESS --fail--> FAILED ---> BLOCKED
 ```
 
 ### Runtime Architecture
@@ -108,8 +110,11 @@ This repository separates **governance tooling** from **user code**:
 
 ```bash
 python3 .governance/wbs_cli.py ready
-python3 .governance/wbs_cli.py claim IMP-001 codex-lead
+python3 .governance/wbs_cli.py claim IMP-001 codex-lead --context-attestation '["constitution.md","AGENTS.md"]'
+python3 .governance/wbs_cli.py preflight IMP-001 codex-lead --assessment docs/governance/examples/preflight.json
 python3 .governance/wbs_cli.py done IMP-001 codex-lead "Implemented and tested" --risk none
+python3 .governance/wbs_cli.py review-claim IMP-001 codex-review
+python3 .governance/wbs_cli.py review-submit IMP-001 codex-review --verdict APPROVE --assessment docs/governance/examples/review.json
 python3 .governance/wbs_cli.py note IMP-001 codex-lead "Evidence: docs/path.md"
 python3 .governance/wbs_cli.py risk-list --status open
 python3 .governance/wbs_cli.py status
@@ -244,9 +249,9 @@ Use source-only shipping for this clone-and-own repository. Do not ship installe
 
 ## Architecture Notes
 
-Additional architecture rationale is in `docs/architecture.md`.
-Residual risk lifecycle guidance is in `docs/codex-migration/residual-risk-governance.md`.
-Current deprecation decisions are tracked in `docs/deprecation-inventory.md`.
+Governance enhancement design is in `docs/governance/prd-sub-2026-002-execution-contract.md`.
+State/event contract is in `docs/governance/state-machine-v2.md` and `.governance/event-schema.v2.json`.
+Ontology guidance is in `docs/ontology.md` and `docs/ontology.json`.
 
 ## Testing
 

@@ -13,8 +13,17 @@ interface KanbanBoardProps {
   onPacketClick?: (id: string) => void;
 }
 
-const columns = ["pending", "in_progress", "done", "failed"];
-const columnLabels: Record<string, string> = { pending: "Pending", in_progress: "In Progress", done: "Done", failed: "Failed" };
+const columns = ["pending", "preflight", "in_progress", "stalled", "review", "escalated", "done", "failed"];
+const columnLabels: Record<string, string> = {
+  pending: "Pending",
+  preflight: "Preflight",
+  in_progress: "In Progress",
+  stalled: "Stalled",
+  review: "Review",
+  escalated: "Escalated",
+  done: "Done",
+  failed: "Failed",
+};
 
 export function KanbanBoard({ packets, onPacketClick }: KanbanBoardProps) {
   return (

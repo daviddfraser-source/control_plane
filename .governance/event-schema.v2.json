@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.substrate/event-schema.v2.json",
+  "title": "Governance Event Schema v2",
+  "type": "object",
+  "required": ["packet_id", "event", "timestamp"],
+  "properties": {
+    "packet_id": {"type": "string", "minLength": 1},
+    "event": {"type": "string", "minLength": 1},
+    "agent": {"type": ["string", "null"]},
+    "timestamp": {"type": "string", "minLength": 1},
+    "notes": {"type": ["string", "null"]},
+    "hash": {"type": "string"},
+    "hash_index": {"type": "integer", "minimum": 1},
+    "previous_hash": {"type": "string"}
+  },
+  "additionalProperties": true
+}
