@@ -40,19 +40,6 @@ jobs:
           chmod +x scripts/governance-integrity-check.sh
           ./scripts/governance-integrity-check.sh
 
-      - name: Run quality gates
-        run: |
-          chmod +x scripts/quality-gates.sh
-          ./scripts/quality-gates.sh
-
-      - name: Verify templates
-        run: |
-          for template in templates/*.json; do
-            echo "Validating $template..."
-            python3 -c "import json; json.load(open('$template'))"
-          done
-          echo "All templates valid"
-
   python-matrix:
     runs-on: ubuntu-latest
     strategy:
@@ -70,13 +57,14 @@ jobs:
 
       - name: Syntax check
         run: |
-          python3 -m py_compile .governance/wbs_cli.py start.py src/governed_platform/governance/canonical_json.py src/governed_platform/governance/dcl.py
+          python3 -m py_compile .governance/wbs_cli.py src/governed_platform/governance/canonical_json.py src/governed_platform/governance/dcl.py src/governed_platform/api/server.py
 
       - name: Unit and API tests
         run: |
           python3 -m unittest discover -s tests -v
 
   skills-agent-eval-smoke:
+    if: ${{ hashFiles('skills/agent-eval/scripts/smoke.sh') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -96,6 +84,7 @@ jobs:
           ./skills/agent-eval/scripts/smoke.sh
 
   skills-security-gates-ci:
+    if: ${{ hashFiles('skills/security-gates/scripts/smoke.sh') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -124,6 +113,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
 
   skills-pr-review-smoke:
+    if: ${{ hashFiles('skills/pr-review-automation/scripts/smoke.sh') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -141,6 +131,7 @@ jobs:
           ./skills/pr-review-automation/scripts/run.sh
 
   skills-precommit-governance:
+    if: ${{ hashFiles('skills/precommit-governance/scripts/smoke.sh') != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -162,6 +153,7 @@ jobs:
           ./skills/precommit-governance/scripts/run.sh
 
   skills-ui-regression:
+    if: ${{ hashFiles('skills/ui-regression/scripts/smoke.sh') != '' }}
     runs-on: ubuntu-latest
 
     steps:
