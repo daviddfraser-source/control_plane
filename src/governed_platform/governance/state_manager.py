@@ -46,6 +46,7 @@ class StateManager:
                 "max_review_cycles": 3,
                 "review_agent_policy": "any_different_agent",
                 "ontology_enabled": False,
+                "drift_detection_mode": "token_heuristic",
             },
         }
 
@@ -80,6 +81,7 @@ class StateManager:
                 "max_review_cycles": 3,
                 "review_agent_policy": "any_different_agent",
                 "ontology_enabled": False,
+                "drift_detection_mode": "token_heuristic",
             },
         )
         state["log_integrity_mode"] = normalize_log_mode(state.get("log_integrity_mode"))

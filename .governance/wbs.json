@@ -37,6 +37,11 @@
       "id": "76-0",
       "title": "Governance Hardening Gaps",
       "description": "Address post-review minor gaps: test coverage, ontology depth/clarity, drift-check semantics, documented defaults, and Gemini lifecycle parity."
+    },
+    {
+      "id": "77-0",
+      "title": "PRD v2 DCL + Multi-User Implementation",
+      "description": "Implement PRD-SUB-2026-002 v2 delta with corrected scope/claims: DCL foundation, compatibility clarifications, canonicalization conformance, file-mode transactional safety, drift maturity separation, and RBAC-first multi-user architecture."
     }
   ],
   "packets": [
@@ -368,6 +373,118 @@
       "area_id": "76-0",
       "title": "Gap-closure integration validation",
       "scope": "Run end-to-end validation for the new hardening packets, capture residual risks, and publish a concise closure report covering test evidence and documentation alignment."
+    },
+    {
+      "id": "GOV-784",
+      "wbs_ref": "7.1",
+      "area_id": "77-0",
+      "title": "PRD v2 delta contract and scope freeze",
+      "scope": "Publish implementation contract that distinguishes already-delivered Enhancements 1-6 from v2 delta work, codifies non-goals, and resolves compatibility wording (multi-user is code + deployment change)."
+    },
+    {
+      "id": "GOV-785",
+      "wbs_ref": "7.2",
+      "area_id": "77-0",
+      "title": "DCL canonical JSON specification",
+      "scope": "Implement canonical serialization module with strict rules (sorted keys, separators, UTF-8, NaN/Infinity rejection, datetime normalization contract) and developer-facing spec docs."
+    },
+    {
+      "id": "GOV-786",
+      "wbs_ref": "7.3",
+      "area_id": "77-0",
+      "title": "Canonicalization conformance vectors",
+      "scope": "Add golden test corpus for canonical serialization across edge cases (int/float distinctions, unicode normalization expectations, null handling, arrays, prohibited numbers) and CI enforcement."
+    },
+    {
+      "id": "GOV-787",
+      "wbs_ref": "7.4",
+      "area_id": "77-0",
+      "title": "DCL commit object + hash pipeline",
+      "scope": "Implement commit object model (action_hash, pre/post state hash, constitution_hash, mandatory diff, seq linkage, genesis rules) and commit hashing pipeline in governance engine."
+    },
+    {
+      "id": "GOV-788",
+      "wbs_ref": "7.5",
+      "area_id": "77-0",
+      "title": "File-mode transactional journal for DCL",
+      "scope": "Implement crash-safe file-mode transaction protocol (journal/write-intent, fsync, atomic swap, replay recovery) so commit/state updates are atomic in OSS mode."
+    },
+    {
+      "id": "GOV-789",
+      "wbs_ref": "7.6",
+      "area_id": "77-0",
+      "title": "DCL verifier and proof export",
+      "scope": "Implement per-packet replay verifier, verify --all, history viewer, and proof bundle export with precise tamper failure localization."
+    },
+    {
+      "id": "GOV-790",
+      "wbs_ref": "7.7",
+      "area_id": "77-0",
+      "title": "Project checkpoints and Merkle root chain",
+      "scope": "Implement project-level checkpoint commits with Merkle root over packet heads to detect missing packet histories and add phase-closeout checkpoint command."
+    },
+    {
+      "id": "GOV-791",
+      "wbs_ref": "7.8",
+      "area_id": "77-0",
+      "title": "Lifecycle integration with DCL policies",
+      "scope": "Integrate DCL emission policy across operations (including heartbeat batching policy and transition-triggered heartbeat commits) without regressing existing lifecycle behavior."
+    },
+    {
+      "id": "GOV-792",
+      "wbs_ref": "7.9",
+      "area_id": "77-0",
+      "title": "API boundary and CLI transport abstraction",
+      "scope": "Introduce API server boundary for governance mutations and refactor CLI to support local-file mode and API-client mode with command parity."
+    },
+    {
+      "id": "GOV-793",
+      "wbs_ref": "7.10",
+      "area_id": "77-0",
+      "title": "Database state manager (SQLite/Postgres)",
+      "scope": "Implement database-backed StateManager with transaction semantics, schema migration path from file-state, and parity with existing GovernanceEngine behavior."
+    },
+    {
+      "id": "GOV-794",
+      "wbs_ref": "7.11",
+      "area_id": "77-0",
+      "title": "RBAC and authenticated identity model",
+      "scope": "Define and implement operator/reviewer/supervisor/admin role model, authenticated identities, reviewer uniqueness semantics, and service-account constraints for automation."
+    },
+    {
+      "id": "GOV-795",
+      "wbs_ref": "7.12",
+      "area_id": "77-0",
+      "title": "Git audit ledger integration service",
+      "scope": "Implement server-side Git ledger writer for DCL commits and governance events with replay-reconstruct support and integrity verification hooks."
+    },
+    {
+      "id": "GOV-796",
+      "wbs_ref": "7.13",
+      "area_id": "77-0",
+      "title": "Web parity for governance operations",
+      "scope": "Extend Next.js control-plane UI to parity for preflight/review/ontology/template/DCL integrity views and multi-user session-aware operations."
+    },
+    {
+      "id": "GOV-797",
+      "wbs_ref": "7.14",
+      "area_id": "77-0",
+      "title": "Drift maturity separation and semantics roadmap",
+      "scope": "Implement explicit drift mode levels (coverage heuristic, token heuristic, semantic contradiction future) in code/docs/CLI output to avoid overclaiming current capability."
+    },
+    {
+      "id": "GOV-798",
+      "wbs_ref": "7.15",
+      "area_id": "77-0",
+      "title": "Program integration and rollout validation",
+      "scope": "Run end-to-end validation for DCL + multi-user foundations, verify backward compatibility for single-user OSS mode, and publish rollout report with residual risks."
+    },
+    {
+      "id": "GOV-799",
+      "wbs_ref": "7.16",
+      "area_id": "77-0",
+      "title": "License migration to AGPL-3.0",
+      "scope": "Replace MIT licensing with AGPL-3.0 across LICENSE and repository governance/docs references; ensure badges and policy text align with copyleft distribution obligations."
     }
   ],
   "dependencies": {
@@ -509,6 +626,65 @@
       "GOV-780",
       "GOV-781",
       "GOV-782"
+    ],
+    "GOV-785": [
+      "GOV-784"
+    ],
+    "GOV-786": [
+      "GOV-785"
+    ],
+    "GOV-787": [
+      "GOV-785",
+      "GOV-786"
+    ],
+    "GOV-788": [
+      "GOV-787"
+    ],
+    "GOV-789": [
+      "GOV-787",
+      "GOV-788"
+    ],
+    "GOV-790": [
+      "GOV-789"
+    ],
+    "GOV-791": [
+      "GOV-787",
+      "GOV-789"
+    ],
+    "GOV-792": [
+      "GOV-784"
+    ],
+    "GOV-793": [
+      "GOV-792"
+    ],
+    "GOV-794": [
+      "GOV-792",
+      "GOV-793"
+    ],
+    "GOV-795": [
+      "GOV-787",
+      "GOV-792",
+      "GOV-793"
+    ],
+    "GOV-796": [
+      "GOV-791",
+      "GOV-794",
+      "GOV-795"
+    ],
+    "GOV-797": [
+      "GOV-784",
+      "GOV-791"
+    ],
+    "GOV-798": [
+      "GOV-790",
+      "GOV-793",
+      "GOV-794",
+      "GOV-795",
+      "GOV-796",
+      "GOV-797"
+    ],
+    "GOV-799": [
+      "GOV-798"
     ]
   }
 }

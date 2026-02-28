@@ -52,6 +52,15 @@ from governed_platform.governance.log_integrity import (
     normalize_log_mode,
     verify_log_integrity,
 )
+from governed_platform.governance.dcl import (
+    export_proof_bundle,
+    history as dcl_history,
+    verify_all as dcl_verify_all,
+    verify_packet as dcl_verify_packet,
+    write_commit as dcl_write_commit,
+    write_project_checkpoint as dcl_write_project_checkpoint,
+)
+from governed_platform.governance.api_transport import GovernanceApiClient, ApiTransportError
 from governed_platform.governance.state_manager import StateManager
 from governed_platform.governance.residual_risks import (
     add_risks,
@@ -104,6 +113,7 @@ RESIDUAL_RISK_REGISTER_PATH = GOV / "residual-risk-register.json"
 SCHEMA_REGISTRY_PATH = GOV / "schema-registry.json"
 AGENTS_REGISTRY_PATH = GOV / "agents.json"
 GIT_GOVERNANCE_PATH = GOV / "git-governance.json"
+DCL_CONFIG_PATH = GOV / "dcl-config.json"
 
 REQUIRED_PACKET_FIELDS = [
     "packet_id",
@@ -824,6 +834,53 @@ def _annotate_git_tag(packet_id: str, *, tag_name: str = "", error: str = "") ->
         return
 
 
+def _load_dcl_config() -> dict:
+    default = {
+        "enabled": True,
+        "heartbeat_commit_policy": "transition_only",
+        "mode": "dcl",
+    }
+    if not DCL_CONFIG_PATH.exists():
+        DCL_CONFIG_PATH.write_text(json.dumps(default, indent=2) + "\n")
+        return default
+    try:
+        payload = json.loads(DCL_CONFIG_PATH.read_text())
+        if not isinstance(payload, dict):
+            return default
+    except Exception:
+        return default
+    merged = dict(default)
+    merged.update(payload)
+    return merged
+
+
+def _annotate_dcl_link(packet_id: str, *, commit_id: str = "", commit_hash: str = "", seq: int = 0) -> None:
+    state = ensure_state_shape(load_state())
+    entries = state.get("log", [])
+    for entry in reversed(entries):
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("packet_id") != packet_id:
+            continue
+        if entry.get("dcl_commit_hash"):
+            continue
+        if commit_id:
+            entry["dcl_commit_id"] = commit_id
+        if commit_hash:
+            entry["dcl_commit_hash"] = commit_hash
+        if seq:
+            entry["dcl_seq"] = int(seq)
+        save_state(state)
+        return
+
+
+def _api_client() -> GovernanceApiClient:
+    base = (os.environ.get("WBS_API_URL") or "").strip()
+    if not base:
+        return None
+    return GovernanceApiClient(base)
+
+
 def _run_lifecycle_with_git(
     packet_id: str,
     action: str,
@@ -833,6 +890,10 @@ def _run_lifecycle_with_git(
     area_id: str = "",
     closeout_area: str = "",
 ) -> tuple:
+    pre_state_all = ensure_state_shape(load_state())
+    pre_packet = dict(pre_state_all.get("packets", {}).get(packet_id, {}) or {})
+    pre_status = normalize_runtime_status(pre_packet.get("status"))
+
     config = load_git_governance_config(GIT_GOVERNANCE_PATH)
     mode = config.get("mode", GIT_MODE_DISABLED)
     auto_commit = bool(config.get("auto_commit"))
@@ -852,6 +913,38 @@ def _run_lifecycle_with_git(
         ok, msg = False, "Invalid lifecycle operation result"
     if not ok:
         return ok, msg, data
+
+    post_state_all = ensure_state_shape(load_state())
+    post_packet = dict(post_state_all.get("packets", {}).get(packet_id, {}) or {})
+    post_status = normalize_runtime_status(post_packet.get("status"))
+
+    dcl_cfg = _load_dcl_config()
+    dcl_enabled = bool(dcl_cfg.get("enabled", True))
+    if dcl_enabled:
+        skip_dcl = False
+        if action == "heartbeat":
+            policy = str(dcl_cfg.get("heartbeat_commit_policy", "transition_only")).strip().lower()
+            if policy == "none":
+                skip_dcl = True
+            elif policy == "transition_only" and pre_status == post_status:
+                skip_dcl = True
+        if not skip_dcl:
+            commit = dcl_write_commit(
+                repo_root=GOV.parent,
+                packet_id=packet_id,
+                action=action,
+                actor=agent or "system",
+                pre_state=pre_packet,
+                post_state=post_packet,
+                reason=msg,
+                inputs={"area_id": area_id, "closeout_area": closeout_area},
+            )
+            _annotate_dcl_link(
+                packet_id,
+                commit_id=str(commit.get("commit_id") or ""),
+                commit_hash=str(commit.get("commit_hash") or ""),
+                seq=int(commit.get("seq") or 0),
+            )
 
     if not auto_commit or mode == GIT_MODE_DISABLED:
         return ok, msg, data
@@ -920,6 +1013,29 @@ def check_deps_met(packet_id: str, definition: dict, state: dict) -> tuple:
 
 def cmd_claim(packet_id: str, agent: str, context_attestation: list = None) -> bool:
     """Claim a packet."""
+    api = _api_client()
+    if api is not None:
+        try:
+            payload = api.post(
+                "/v1/claim",
+                {
+                    "packet_id": packet_id,
+                    "agent": agent,
+                    "context_attestation": context_attestation or [],
+                    "role": os.environ.get("WBS_API_ROLE", "operator"),
+                },
+            )
+            ok = bool(payload.get("ok"))
+            msg = str(payload.get("message") or "")
+            if ok:
+                print(green(msg))
+            else:
+                print(red(_format_error(msg)))
+            return ok
+        except ApiTransportError as e:
+            print(red(f"API transport error: {e}"))
+            return False
+
     ok, msg, data = _run_lifecycle_with_git(
         packet_id=packet_id,
         action="claim",
@@ -1047,6 +1163,28 @@ def cmd_done(
     risk_entries: list = None,
 ) -> bool:
     """Mark packet done."""
+    api = _api_client()
+    if api is not None:
+        try:
+            payload = api.post(
+                "/v1/done",
+                {
+                    "packet_id": packet_id,
+                    "agent": agent,
+                    "notes": notes,
+                    "role": os.environ.get("WBS_API_ROLE", "operator"),
+                },
+            )
+            ok = bool(payload.get("ok"))
+            msg = str(payload.get("message") or "")
+            if ok:
+                print(green(f"{msg} (api mode)"))
+            else:
+                print(red(_format_error(msg)))
+            return ok
+        except ApiTransportError as e:
+            print(red(f"API transport error: {e}"))
+            return False
     ack = str(risk_ack or "").strip().lower()
     risks = list(risk_entries or [])
     if ack not in {"none", "declared"}:
@@ -1118,6 +1256,28 @@ def cmd_done(
 
 def cmd_note(packet_id: str, agent: str, notes: str) -> bool:
     """Update notes for any existing packet state."""
+    api = _api_client()
+    if api is not None:
+        try:
+            payload = api.post(
+                "/v1/note",
+                {
+                    "packet_id": packet_id,
+                    "agent": agent,
+                    "notes": notes,
+                    "role": os.environ.get("WBS_API_ROLE", "operator"),
+                },
+            )
+            ok = bool(payload.get("ok"))
+            msg = str(payload.get("message") or "")
+            if ok:
+                print(green(msg))
+            else:
+                print(red(_format_error(msg)))
+            return ok
+        except ApiTransportError as e:
+            print(red(f"API transport error: {e}"))
+            return False
     ok, msg, data = _run_lifecycle_with_git(
         packet_id=packet_id,
         action="note",
@@ -1349,7 +1509,16 @@ def cmd_ontology_validate(packet_id: str) -> bool:
     return ok
 
 
-def cmd_ontology_check_drift() -> bool:
+def cmd_ontology_check_drift(mode: str = "") -> bool:
+    if mode:
+        token = str(mode).strip().lower()
+        allowed = {"coverage_only", "token_heuristic", "semantic_future"}
+        if token not in allowed:
+            print(red(f"Invalid drift mode: {mode}. Use one of: {', '.join(sorted(allowed))}"))
+            return False
+        state = ensure_state_shape(load_state())
+        state.setdefault("governance_config", {})["drift_detection_mode"] = token
+        save_state(state)
     payload = governance_engine().ontology_check_drift()
     if JSON_OUTPUT:
         output_json(payload)
@@ -1402,6 +1571,28 @@ def cmd_ontology_history() -> bool:
 
 def cmd_fail(packet_id: str, agent: str, reason: str = "") -> bool:
     """Mark packet failed and block downstream."""
+    api = _api_client()
+    if api is not None:
+        try:
+            payload = api.post(
+                "/v1/fail",
+                {
+                    "packet_id": packet_id,
+                    "agent": agent,
+                    "reason": reason,
+                    "role": os.environ.get("WBS_API_ROLE", "operator"),
+                },
+            )
+            ok = bool(payload.get("ok"))
+            msg = str(payload.get("message") or "")
+            if ok:
+                print(yellow(msg))
+            else:
+                print(red(_format_error(msg)))
+            return ok
+        except ApiTransportError as e:
+            print(red(f"API transport error: {e}"))
+            return False
     ok, msg, data = _run_lifecycle_with_git(
         packet_id=packet_id,
         action="fail",
@@ -2060,6 +2251,85 @@ def cmd_verify_log() -> bool:
     for issue in issues:
         print(f"  - {issue}")
     return False
+
+
+def cmd_verify(packet_id: str = "", verify_all_packets: bool = False) -> bool:
+    if verify_all_packets:
+        ok, issues = dcl_verify_all(GOV.parent)
+        payload = {"ok": ok, "issues": issues}
+        if output_json(payload):
+            return ok
+        if ok:
+            print(green("DCL verification passed for all packets"))
+            return True
+        print(red("DCL verification failed"))
+        for pid, errs in issues.items():
+            for err in errs:
+                print(f"  - {pid}: {err}")
+        return False
+
+    if not packet_id:
+        print(red("verify requires <packet_id> or --all"))
+        return False
+    ok, errs = dcl_verify_packet(GOV.parent, packet_id)
+    payload = {"ok": ok, "packet_id": packet_id, "issues": errs}
+    if output_json(payload):
+        return ok
+    if ok:
+        print(green(f"DCL verification passed: {packet_id}"))
+        return True
+    print(red(f"DCL verification failed: {packet_id}"))
+    for err in errs:
+        print(f"  - {err}")
+    return False
+
+
+def cmd_history(packet_id: str) -> bool:
+    rows = dcl_history(GOV.parent, packet_id)
+    payload = {"packet_id": packet_id, "commits": rows}
+    if output_json(payload):
+        return True
+    if not rows:
+        print("No DCL commits")
+        return True
+    print(f"\nDCL History: {packet_id}")
+    print("-" * 100)
+    print(f"{'Seq':<6} {'Commit':<16} {'Action':<18} {'Actor':<16} {'Created'}")
+    print("-" * 100)
+    for row in rows:
+        env = row.get("action_envelope", {})
+        print(
+            f"{int(row.get('seq', 0)):<6} {str(row.get('commit_hash', ''))[:16]:<16} "
+            f"{str(env.get('name', '')):<18} {str(env.get('actor', {}).get('id', '')):<16} "
+            f"{str(row.get('created_at', ''))}"
+        )
+    return True
+
+
+def cmd_export_proof(packet_id: str, out_path: str) -> bool:
+    out = Path(out_path).expanduser()
+    if not out.is_absolute():
+        out = GOV.parent / out
+    bundle = export_proof_bundle(GOV.parent, packet_id, out)
+    if output_json({"ok": True, "packet_id": packet_id, "bundle": str(bundle)}):
+        return True
+    print(green(f"Proof bundle exported: {bundle}"))
+    return True
+
+
+def cmd_checkpoint(phase: str) -> bool:
+    state = ensure_state_shape(load_state())
+    packet_heads = {}
+    for packet_id in sorted(state.get("packets", {}).keys()):
+        rows = dcl_history(GOV.parent, packet_id)
+        if not rows:
+            continue
+        packet_heads[packet_id] = str(rows[-1].get("commit_hash") or "")
+    payload = dcl_write_project_checkpoint(GOV.parent, phase=phase or "unspecified", packet_heads=packet_heads)
+    if output_json(payload):
+        return True
+    print(green(f"Checkpoint created: {payload.get('checkpoint_id')} root={payload.get('merkle_root')[:16]}"))
+    return True
 
 
 def cmd_next():
@@ -2818,6 +3088,10 @@ def print_help():
     print("  risk-summary          Aggregate residual risk counts")
     print("  log-mode <mode>       Set log integrity mode (plain|hash-chain)")
     print("  verify-log            Verify tamper-evident log chain")
+    print("  verify <id>|--all     Verify DCL commit chain integrity")
+    print("  history <id>          Show DCL commit timeline for a packet")
+    print("  export-proof <id> --out <path.zip> Export packet proof bundle")
+    print("  checkpoint --phase <name> Create project-level Merkle checkpoint")
     print()
     print("  add-area <id> <title> [desc]       Add work area")
     print("  add-packet <id> <area> <title>     Add packet (scope via stdin or -s)")
@@ -3319,7 +3593,13 @@ def main():
                 if not cmd_ontology_validate(args[2]):
                     sys.exit(1)
             elif sub == "check-drift":
-                if not cmd_ontology_check_drift():
+                drift_mode = ""
+                if len(args) > 2:
+                    if len(args) != 4 or args[2] != "--mode":
+                        print("Usage: wbs_cli.py ontology check-drift [--mode coverage_only|token_heuristic|semantic_future]")
+                        sys.exit(1)
+                    drift_mode = args[3]
+                if not cmd_ontology_check_drift(mode=drift_mode):
                     sys.exit(1)
             elif sub == "propose":
                 if len(args) < 6 or args[2] != "--actor" or args[4] != "--payload":
@@ -3512,6 +3792,35 @@ def main():
                 sys.exit(1)
         elif cmd == "verify-log":
             if require_state() and not cmd_verify_log():
+                sys.exit(1)
+        elif cmd == "verify":
+            verify_all_packets = "--all" in args[1:]
+            extra = [arg for arg in args[1:] if arg != "--all"]
+            packet_id = ""
+            if extra:
+                if len(extra) != 1:
+                    print("Usage: wbs_cli.py verify <packet_id> | --all")
+                    sys.exit(1)
+                packet_id = extra[0]
+            if not cmd_verify(packet_id=packet_id, verify_all_packets=verify_all_packets):
+                sys.exit(1)
+        elif cmd == "history":
+            if len(args) < 2:
+                print("Usage: wbs_cli.py history <packet_id>")
+                sys.exit(1)
+            if not cmd_history(args[1]):
+                sys.exit(1)
+        elif cmd == "export-proof":
+            if len(args) < 4 or args[2] != "--out":
+                print("Usage: wbs_cli.py export-proof <packet_id> --out <proof.zip>")
+                sys.exit(1)
+            if not cmd_export_proof(args[1], args[3]):
+                sys.exit(1)
+        elif cmd == "checkpoint":
+            if len(args) < 3 or args[1] != "--phase":
+                print("Usage: wbs_cli.py checkpoint --phase <name>")
+                sys.exit(1)
+            if not cmd_checkpoint(args[2]):
                 sys.exit(1)
         elif cmd == "graph":
             output = ""

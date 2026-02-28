@@ -68,6 +68,8 @@ Use this file as executable governance, not background documentation.
   - impacted tests or smoke checks
 - If validation is not run, say so explicitly in notes/report.
 - For non-deterministic agent workflows, prefer repeatable eval scripts and persisted reports.
+- Use DCL verification as part of governance validation for state-changing programs:
+  - `python3 .governance/wbs_cli.py verify --all`
 
 ## Required Delivery Reporting
 - If the user asks for a WBS delivery report (for a phase, area, or specific WBS ref), output a full report directly in chat.
@@ -112,6 +114,7 @@ Use this file as executable governance, not background documentation.
 - Keep governance docs aligned with actual CLI/API behavior.
 - Use stable file paths for evidence to keep packet viewer useful.
 - Keep `docs/governance-workflow-codex.md` aligned with current CLI behavior.
+- Keep DCL documentation (`docs/governance/dcl-spec-v1.md`) aligned with runtime implementation and CLI commands.
 
 ## Packet Standard
 - Canonical schema: `.governance/packet-schema.json`

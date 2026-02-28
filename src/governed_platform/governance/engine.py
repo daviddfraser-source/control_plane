@@ -1283,6 +1283,7 @@ class GovernanceEngine(GovernanceInterface):
         state = self._load()
         drifts = []
         term_usage = {}
+        mode = str(self._governance_config(state).get("drift_detection_mode", "token_heuristic"))
         for pid, pkt in state.get("packets", {}).items():
             runtime = normalize_runtime_status(pkt.get("status"))
             if runtime not in ("in_progress", "review", "stalled"):
@@ -1296,21 +1297,31 @@ class GovernanceEngine(GovernanceInterface):
                     }
                 )
                 continue
-            for token in self._ontology_tokens(pkt.get("notes")):
-                term_usage.setdefault(token, []).append(pid)
-        for token, packets in term_usage.items():
-            unique = sorted(set(packets))
-            if len(unique) >= 3:
-                drifts.append(
-                    {
-                        "packet_id": ",".join(unique),
-                        "severity": "info",
-                        "message": f"High-shared ontology token '{token}' across {len(unique)} active packets; review for consistency",
-                    }
-                )
+            if mode in ("token_heuristic", "semantic_future"):
+                for token in self._ontology_tokens(pkt.get("notes")):
+                    term_usage.setdefault(token, []).append(pid)
+        if mode in ("token_heuristic", "semantic_future"):
+            for token, packets in term_usage.items():
+                unique = sorted(set(packets))
+                if len(unique) >= 3:
+                    drifts.append(
+                        {
+                            "packet_id": ",".join(unique),
+                            "severity": "info",
+                            "message": f"High-shared ontology token '{token}' across {len(unique)} active packets; review for consistency",
+                        }
+                    )
+        if mode == "semantic_future":
+            drifts.append(
+                {
+                    "packet_id": "*",
+                    "severity": "info",
+                    "message": "semantic_future mode selected; contradiction inference engine not yet implemented",
+                }
+            )
         state.setdefault("ontology", {})["last_drift_scan_at"] = datetime.now().isoformat()
         self._save(state)
-        return {"drifts": drifts, "count": len(drifts), "mode": "token-consistency-heuristic"}
+        return {"drifts": drifts, "count": len(drifts), "mode": mode}
 
     def ontology_propose(self, actor: str, payload: Dict[str, Any]) -> Tuple[bool, str]:
         state = self._load()

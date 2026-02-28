@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "heartbeat_commit_policy": "transition_only",
+  "mode": "dcl"
+}

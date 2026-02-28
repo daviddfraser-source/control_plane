@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     GitBranch, Package, TerminalSquare, Network,
-    ClipboardList, AlertTriangle, Settings, ChevronLeft, ChevronRight, type LucideIcon
+    ClipboardList, AlertTriangle, Settings, ChevronLeft, ChevronRight, ShieldCheck, type LucideIcon
 } from "lucide-react";
 import { SectionSwitcher } from "@/components/governance/SectionSwitcher";
 import { ThemeToggle } from "@/components/governance/ThemeToggle";
@@ -19,6 +19,7 @@ const devNav: NavItem[] = [
     { href: "/dev/packets", label: "Packets", icon: Package },
     { href: "/dev/graph", label: "Dependency Graph", icon: Network },
     { href: "/dev/audit", label: "Audit Log", icon: ClipboardList },
+    { href: "/dev/integrity", label: "Integrity", icon: ShieldCheck },
     { href: "/dev/risks", label: "Risk Register", icon: AlertTriangle },
     { href: "/dev/terminal", label: "CLI Terminal", icon: TerminalSquare },
     { href: "/dev/settings", label: "Settings", icon: Settings },

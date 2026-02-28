@@ -6,6 +6,7 @@
 2. `python3 .governance/wbs_cli.py ready`
 3. `python3 .governance/wbs_cli.py claim <packet_id> <agent> [--context-attestation '["constitution.md"]']`
 4. `python3 .governance/wbs_cli.py context <packet_id> --format json`
+5. Optional API mode: set `WBS_API_URL=http://127.0.0.1:8081` for CLI transport via governance API.
 
 ## Execution
 
@@ -33,3 +34,12 @@
 - Promote stable execution patterns:
   - `python3 .governance/wbs_cli.py promote <packet_id> <supervisor> --template-id <id>`
   - `python3 .governance/wbs_cli.py templates list`
+
+## Integrity Verification
+
+- Verify all DCL chains:
+  - `python3 .governance/wbs_cli.py verify --all`
+- Inspect packet commit history:
+  - `python3 .governance/wbs_cli.py history <packet_id>`
+- Export proof bundle:
+  - `python3 .governance/wbs_cli.py export-proof <packet_id> --out proof.zip`

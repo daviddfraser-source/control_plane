@@ -3,7 +3,7 @@
 [![CI](https://github.com/daviddfraser-source/Substrate/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/daviddfraser-source/Substrate/actions/workflows/test.yml)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](#get-started)
 [![Open in GitHub Codespaces](https://img.shields.io/badge/dev-GitHub%20Codespaces-24292f?logo=github)](https://codespaces.new/daviddfraser-source/Substrate)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
 Formal packet/state-machine orchestration for multi-agent software delivery, with dependency gating, file-backed state, and auditable lifecycle logs.
 
@@ -31,6 +31,12 @@ Operational defaults:
 - heartbeat interval default: `900s` (15 minutes)
 - stall threshold default: `2x` heartbeat interval (`1800s`)
 - preflight timeout default: `3600s` (returns packet to `pending`)
+
+Deterministic Commitment Layer (DCL):
+- every state-changing governance operation emits a DCL commit (`.governance/dcl/packets/<id>/commits/*`)
+- replay verification command: `python3 .governance/wbs_cli.py verify --all`
+- packet history command: `python3 .governance/wbs_cli.py history <PACKET_ID>`
+- proof export command: `python3 .governance/wbs_cli.py export-proof <PACKET_ID> --out proof.zip`
 
 ## Get Started
 
@@ -257,6 +263,9 @@ Use source-only shipping for this clone-and-own repository. Do not ship installe
 Governance enhancement design is in `docs/governance/prd-sub-2026-002-execution-contract.md`.
 State/event contract is in `docs/governance/state-machine-v2.md` and `.governance/event-schema.v2.json`.
 Ontology guidance is in `docs/ontology.md` and `docs/ontology.json`.
+PRD v2 delta scope is in `docs/governance/prd-sub-2026-002-v2-delta-contract.md`.
+DCL details are in `docs/governance/dcl-spec-v1.md`.
+Multi-user foundation details are in `docs/governance/multi-user-architecture-v1.md`.
 
 Ontology enforcement depth (current):
 - deterministic token and phrase checks only (no NLP semantic inference)
@@ -271,4 +280,4 @@ python3 -m unittest discover -s tests -v
 
 ## License
 
-MIT.
+GNU Affero General Public License v3.0 (AGPL-3.0).

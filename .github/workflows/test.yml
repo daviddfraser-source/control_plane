@@ -32,6 +32,7 @@ jobs:
         run: |
           python3 .governance/wbs_cli.py git-protocol --json >/tmp/git-protocol.json
           python3 .governance/wbs_cli.py --json git-verify-ledger --strict >/tmp/git-ledger-verify.json
+          python3 .governance/wbs_cli.py --json verify --all >/tmp/dcl-verify.json
 
 
       - name: Governance integrity checks
@@ -69,7 +70,7 @@ jobs:
 
       - name: Syntax check
         run: |
-          python3 -m py_compile .governance/wbs_cli.py .governance/wbs_server.py start.py
+          python3 -m py_compile .governance/wbs_cli.py start.py src/governed_platform/governance/canonical_json.py src/governed_platform/governance/dcl.py
 
       - name: Unit and API tests
         run: |

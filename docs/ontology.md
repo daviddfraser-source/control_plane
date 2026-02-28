@@ -56,3 +56,7 @@ Anti-aliases: milestone
   - notes coverage for active packets
   - shared-token consistency heuristics across active packets
 - This is advisory telemetry, not full semantic contradiction inference.
+- Configurable modes:
+  - `coverage_only`
+  - `token_heuristic` (default)
+  - `semantic_future` (roadmap marker)

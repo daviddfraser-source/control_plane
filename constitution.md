@@ -4,7 +4,7 @@
 **Repository:** https://github.com/daviddfraser-source/Substrate  
 **Authority:** Project governance framework  
 **Enforcement:** Automated via `.governance/wbs_cli.py`  
-**License:** MIT
+**License:** AGPL-3.0
 
 ## Preamble
 
@@ -126,6 +126,13 @@ Every state transition must be logged with timestamp, agent identifier, and tran
 **Rationale:** Creates immutable audit trail for all governance actions.
 
 **Enforcement:** Automatic logging in `.governance/wbs-state.json` log array. Append-only structure.
+
+### Section 7: Deterministic Commitment Layer
+State-changing governance operations must produce deterministic DCL commits with canonical serialization, pre/post state hashes, constitution hash, and mandatory diffs.
+
+**Rationale:** Audit logs alone are insufficient for replay-verifiable tamper detection.
+
+**Enforcement:** `wbs_cli.py verify --all` validates per-packet DCL chains; failures are integrity violations.
 
 ---
 
